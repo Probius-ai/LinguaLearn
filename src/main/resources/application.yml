@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: LinguaLearn # From application.properties
+firebase:
+  project:
+    id: mulit-lingua # 기존 firebase.project.id
+  service:
+    account:
+      path: mulit-lingua-firebase-adminsdk-fbsvc-ca6a605942.json # 기존 firebase.service.account.path

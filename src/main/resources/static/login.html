@@ -1,0 +1,223 @@
+<!-- filepath: src/main/resources/static/login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Login Test</title>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <!-- FirebaseUI -->
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
+
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #firebaseui-auth-container { margin-top: 20px; }
+        #response, #user-info { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+        button { margin-top: 10px; padding: 8px 15px; }
+    </style>
+</head>
+<body>
+    <h1>Firebase Authentication Test</h1>
+
+    <div id="firebaseui-auth-container"></div>
+    <div id="user-info" style="display: none;">
+        <p>Welcome, <span id="user-name"></span>!</p>
+        <button id="logout-button">Logout</button>
+        <button id="call-secure-api">Call Secure API</button>
+    </div>
+    <div id="response">API Response will appear here.</div>
+
+    <script>
+        // --- START: Firebase Configuration Fetch ---
+        // Function to fetch Firebase config from the backend
+        async function fetchFirebaseConfig() {
+            try {
+                const response = await fetch('/api/firebase/config'); // Fetch from your backend endpoint
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const config = await response.json();
+                console.log("Firebase config fetched successfully:", config);
+                return config;
+            } catch (error) {
+                console.error("Could not fetch Firebase config:", error);
+                document.getElementById('response').textContent = 'Error: Could not load Firebase configuration from backend.';
+                return null; // Indicate failure
+            }
+        }
+
+        // --- END: Firebase Configuration Fetch ---
+
+        // --- START: Firebase Initialization and UI Setup ---
+        // Asynchronous function to initialize Firebase and set up the UI
+        async function initializeApp() {
+            const firebaseConfig = await fetchFirebaseConfig();
+
+            // Only proceed if config was fetched successfully
+            if (firebaseConfig) {
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                console.log("Firebase App Initialized with fetched config. API Key:", firebase.app().options.apiKey);
+
+                // FirebaseUI config (remains the same)
+                const uiConfig = {
+                  signInSuccessUrl: null, // Stay on this page after sign-in
+                  signInOptions: [
+                    // List of OAuth providers supported.
+                    // firebase.auth.GoogleAuthProvider.PROVIDER_ID, // Temporarily comment out Google
+                    firebase.auth.EmailAuthProvider.PROVIDER_ID
+                    // Add other providers as needed
+                  ],
+                  callbacks: {
+                    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+                      // User successfully signed in.
+                      // Return false to prevent redirect.
+                      return false;
+                    },
+                    uiShown: function() {
+                      // The widget is rendered. Hide the loader.
+                      // document.getElementById('loader').style.display = 'none';
+                    }
+                  },
+                  // Other config options...
+                };
+
+                // Initialize the FirebaseUI Widget using Firebase.
+                const ui = new firebaseui.auth.AuthUI(firebase.auth());
+
+                // Get DOM elements (remains the same)
+                const userInfoDiv = document.getElementById('user-info');
+                const userNameSpan = document.getElementById('user-name');
+                const loginContainer = document.getElementById('firebaseui-auth-container');
+                const logoutButton = document.getElementById('logout-button');
+                const callApiButton = document.getElementById('call-secure-api');
+                const responseDiv = document.getElementById('response');
+
+                // Function to call the backend sync endpoint (remains the same)
+                async function syncBackendProfile(idToken) {
+                    // ... existing syncBackendProfile function code ...
+                    console.log("Calling backend sync endpoint...");
+                    responseDiv.textContent = 'Syncing profile with backend...';
+                    try {
+                        const res = await fetch('/api/secure/users/sync', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer ' + idToken,
+                                'Content-Type': 'application/json' // Optional: if sending body
+                            }
+                            // No body needed for this endpoint as it uses the token
+                        });
+
+                        if (res.ok) {
+                            const userData = await res.json();
+                            console.log("Backend sync successful:", userData);
+                            responseDiv.textContent = 'Profile synced successfully. User: ' + (userData.displayName || userData.email);
+                        } else {
+                            const errorText = await res.text();
+                            console.error(`Backend sync failed: ${res.status} ${res.statusText}`, errorText);
+                            responseDiv.textContent = `Error syncing profile: ${res.status} ${res.statusText}. ${errorText}`;
+                        }
+                    } catch (error) {
+                        console.error('Error calling sync API:', error);
+                        responseDiv.textContent = 'Error calling sync API: ' + error.message;
+                    }
+                }
+
+
+                // Flag to track if UI has been started (remains the same)
+                let uiStarted = false;
+
+                // Listen for auth state changes (remains the same, but now depends on Firebase being initialized)
+                firebase.auth().onAuthStateChanged(async (user) => {
+                  if (user) {
+                    // User is signed in.
+                    uiStarted = false; // Reset flag when user signs in
+                    console.log("User signed in:", user);
+                    userNameSpan.textContent = user.displayName || user.email || user.uid;
+                    userInfoDiv.style.display = 'block';
+                    loginContainer.style.display = 'none'; // Hide FirebaseUI container
+
+                    try {
+                        const idToken = await user.getIdToken();
+                        console.log("ID Token obtained for sync:", idToken);
+                        // Call the backend sync endpoint after getting the token
+                        await syncBackendProfile(idToken); // <<< ADD THIS CALL
+                    } catch (error) {
+                        console.error("Error getting ID token or syncing:", error);
+                        responseDiv.textContent = 'Error during login process: ' + error.message;
+                    }
+
+                  } else {
+                    // User is signed out.
+                    console.log("User signed out");
+                    userInfoDiv.style.display = 'none';
+                    loginContainer.style.display = 'block'; // Show FirebaseUI container
+                    responseDiv.textContent = 'Please sign in.';
+                    // localStorage.removeItem('firebaseIdToken');
+                    // Start FirebaseUI only if it hasn't been started yet in the signed-out state
+                    if (!uiStarted) {
+                         console.log("Starting FirebaseUI...");
+                         // Ensure the container is visible before starting
+                         loginContainer.style.display = 'block';
+                         ui.start('#firebaseui-auth-container', uiConfig);
+                         uiStarted = true;
+                    }
+                  }
+                });
+
+                // Logout button handler (remains the same)
+                logoutButton.addEventListener('click', () => {
+                  firebase.auth().signOut().then(() => {
+                    console.log('Signed out successfully');
+                  }).catch((error) => {
+                    console.error('Sign out error', error);
+                    responseDiv.textContent = 'Error signing out: ' + error.message;
+                  });
+                });
+
+                // Call secure API button handler (remains the same)
+                callApiButton.addEventListener('click', async () => {
+                  responseDiv.textContent = 'Calling API...';
+                  const user = firebase.auth().currentUser;
+                  if (!user) {
+                      responseDiv.textContent = 'You must be logged in to call the API.';
+                      return;
+                  }
+
+                  try {
+                      const idToken = await user.getIdToken(/* forceRefresh */ true); // Force refresh for testing is optional
+                      console.log("Sending token:", idToken);
+
+                      const res = await fetch('/api/secure/hello', {
+                          method: 'GET',
+                          headers: {
+                              'Authorization': 'Bearer ' + idToken
+                          }
+                      });
+
+                      if (res.ok) {
+                          const data = await res.text();
+                          responseDiv.textContent = 'API Response: ' + data;
+                      } else {
+                          responseDiv.textContent = `Error calling API: ${res.status} ${res.statusText}`;
+                          console.error("API Error Response:", await res.text());
+                      }
+                  } catch (error) {
+                      console.error('Error calling secure API:', error);
+                      responseDiv.textContent = 'Error calling API: ' + error.message;
+                  }
+                });
+
+            } // end if(firebaseConfig)
+        }
+
+        // Call the initialization function when the script loads
+        initializeApp();
+        // --- END: Firebase Initialization and UI Setup ---
+
+    </script>
+</body>
+</html>
