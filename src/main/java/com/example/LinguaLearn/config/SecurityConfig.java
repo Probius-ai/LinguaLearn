@@ -23,14 +23,17 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().requestMatchers(
-            new AntPathRequestMatcher("/"), // Root path for static index.html or welcome page
-            new AntPathRequestMatcher("/login.html"),
+            new AntPathRequestMatcher("/"), // Main page served by controller
+            new AntPathRequestMatcher("/login.html"), // If you have a separate login page
             new AntPathRequestMatcher("/favicon.ico"),
-            new AntPathRequestMatcher("/*.js"),
-            new AntPathRequestMatcher("/*.css"),
+            // Correctly ignore static resources in subdirectories
+            new AntPathRequestMatcher("/css/**"),
+            new AntPathRequestMatcher("/js/**"),
+            // new AntPathRequestMatcher("/images/**"), // Add other static resource folders if needed
             new AntPathRequestMatcher("/error"),
             new AntPathRequestMatcher("/public/**"),
-            new AntPathRequestMatcher("/api/firebase/config") // <<< Explicitly ignore the config endpoint
+            new AntPathRequestMatcher("/api/firebase/config") // Firebase config endpoint
+            // Add any other paths needed for the login process that should bypass security
         );
     }
 
@@ -40,10 +43,12 @@ public class SecurityConfig {
             // Authorize requests AFTER ignoring the paths defined above
             .authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
-                    // Secure API endpoints require authentication
+                    // Allow access to specific non-secured API endpoints if needed
+                    // .requestMatchers("/api/public/**").permitAll()
                     .requestMatchers("/api/secure/**").authenticated()
-                    // Any other request not ignored above must be authenticated
-                    .anyRequest().authenticated()
+                    // You might want to allow access to certain pages without login
+                    // .requestMatchers("/quiz", "/translate", "/words").permitAll()
+                    .anyRequest().authenticated() // Secure everything else by default
             )
             .sessionManagement(sessionManagement ->
                 sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

@@ -1,9 +1,10 @@
 {
-  "apiKey": "AIzaSyAaHJXN8jNTmC1KrLybOW4vvw3eHpH7Fg8",
-  "authDomain": "mulit-lingua.firebaseapp.com",
-  "projectId": "mulit-lingua",
-  "storageBucket": "mulit-lingua.firebasestorage.app",
-  "messagingSenderId": "591254170485",
-  "appId": "1:591254170485:web:d45e1475f8957791e4c13c",
-  "measurementId": "G-9E7SS2EE5S"
+  "apiKey": "AIzaSyBN9wEqhtgBhxaHnySMv8AvFIpdx_-4lRI",
+  "authDomain": "llm-lingualearn.firebaseapp.com",
+  "databaseURL": "https://llm-lingualearn-default-rtdb.asia-southeast1.firebasedatabase.app",
+  "projectId": "llm-lingualearn",
+  "storageBucket": "llm-lingualearn.firebasestorage.app",
+  "messagingSenderId": "747640931525",
+  "appId": "1:747640931525:web:b993387115c24aec581cac",
+  "measurementId": "G-XC89E2D3VT"
 }

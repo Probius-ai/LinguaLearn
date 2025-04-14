@@ -1,0 +1,578 @@
+/* 프로필 페이지 전용 스타일 */
+.profile-main {
+    padding-top: 2rem;
+}
+
+/* 프로필 헤더 섹션 */
+.profile-header {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.profile-cover {
+    height: 200px;
+    background-color: var(--accent);
+    background-image: linear-gradient(45deg, var(--accent), var(--accent-hover));
+    position: relative;
+}
+
+.profile-info {
+    display: flex;
+    padding: 1.5rem;
+    position: relative;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.profile-avatar {
+    margin-top: -60px;
+}
+
+.avatar.large {
+    width: 120px;
+    height: 120px;
+    font-size: 3rem;
+    border: 5px solid var(--bg-secondary);
+}
+
+.profile-details {
+    flex: 1;
+    min-width: 250px;
+}
+
+.profile-details h1 {
+    font-size: 2rem;
+    margin-bottom: 0.3rem;
+}
+
+.user-email {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.user-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.edit-profile-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+}
+
+/* 프로필 드롭다운 */
+.profile-dropdown {
+    position: relative;
+}
+
+.profile-dropdown .avatar {
+    cursor: pointer;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 120%;
+    right: 0;
+    width: 150px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px var(--shadow);
+    overflow: hidden;
+    display: none;
+    z-index: 100;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 10px 15px;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.dropdown-menu a:hover, .dropdown-menu a.active {
+    background-color: var(--gray-200);
+    color: var(--accent);
+}
+
+.profile-dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+/* 프로필 컨텐츠 */
+.profile-content {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px var(--shadow);
+}
+
+/* 탭 네비게이션 */
+.profile-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    gap: 1rem;
+}
+
+.tab-btn {
+    padding: 0.8rem 1.2rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+/* 탭 콘텐츠 */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+}
+
+/* 학습 진행도 탭 */
+.progress-overview, .learning-stats, .recent-achievements {
+    margin-bottom: 3rem;
+}
+
+.language-progress {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.language-item {
+    background-color: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 3px 10px var(--shadow);
+}
+
+.language-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.language-header h3 {
+    margin: 0;
+}
+
+.level {
+    background-color: var(--gray-200);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.progress-bar {
+    height: 10px;
+    background-color: var(--gray-200);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--accent);
+    border-radius: 5px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* 학습 통계 섹션 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background-color: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 3px 10px var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: rgba(67, 97, 238, 0.1);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-info h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.stat-info .stat-value {
+    font-size: 1.8rem;
+    margin-bottom: 0.3rem;
+}
+
+.stat-change {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.stat-change.positive {
+    color: var(--success);
+}
+
+.stat-change.negative {
+    color: var(--error);
+}
+
+/* 업적 목록 */
+.achievements-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.achievement-item {
+    background-color: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 3px 10px var(--shadow);
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.achievement-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(67, 97, 238, 0.1);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.achievement-icon.streak {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+}
+
+.achievement-icon.quiz {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+}
+
+.achievement-details h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.achievement-details p {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.achievement-date {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* 활동 타임라인 */
+.activity-timeline {
+    margin-left: 30px;
+    position: relative;
+}
+
+.activity-timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -20px;
+    width: 2px;
+    background-color: var(--border);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: -40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(67, 97, 238, 0.1);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.timeline-icon.quiz {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+}
+
+.timeline-icon.translate {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #2196f3;
+}
+
+.timeline-content {
+    background-color: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 3px 10px var(--shadow);
+}
+
+.timeline-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-content p {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.timeline-date {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* 즐겨찾기 탭 */
+.favorites-category {
+    margin-bottom: 2rem;
+}
+
+.favorites-category h3 {
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+}
+
+.favorite-words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.word-chip {
+    background-color: var(--bg-secondary);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 5px var(--shadow);
+}
+
+.word-translation {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-left: 1px solid var(--border);
+    padding-left: 0.5rem;
+}
+
+.remove-favorite {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem;
+    margin-left: 0.3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.remove-favorite:hover {
+    background-color: var(--error);
+    color: white;
+}
+
+/* 설정 탭 */
+.settings-form {
+    max-width: 800px;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.form-section h3 {
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group select {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.form-group input:disabled {
+    background-color: var(--gray-200);
+    cursor: not-allowed;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.form-group.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.form-group.checkbox-group label {
+    margin-bottom: 0;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 992px) {
+    .user-stats {
+        flex-wrap: wrap;
+    }
+    
+    .edit-profile-btn {
+        position: static;
+        margin-top: 1rem;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-info {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profile-avatar {
+        margin-top: -80px;
+    }
+    
+    .user-stats {
+        justify-content: center;
+    }
+    
+    .stats-grid, .achievements-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .profile-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        text-align: center;
+    }
+}
