@@ -47,5 +47,5 @@ public class FirebaseConfigController {
             // 오류 발생 시 빈 Map 또는 에러 응답을 반환합니다.
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyMap());
         }
-    }
-}
+    } // getFirebaseConfig() 메서드 닫는 괄호
+} // FirebaseConfigController 클래스 닫는 괄호

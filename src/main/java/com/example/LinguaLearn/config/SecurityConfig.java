@@ -1,6 +1,5 @@
 package com.example.LinguaLearn.config;
 
-import com.example.LinguaLearn.filter.FirebaseTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +10,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import com.example.LinguaLearn.filter.FirebaseTokenFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -29,10 +30,11 @@ public class SecurityConfig {
             // Correctly ignore static resources in subdirectories
             new AntPathRequestMatcher("/css/**"),
             new AntPathRequestMatcher("/js/**"),
-            // new AntPathRequestMatcher("/images/**"), // Add other static resource folders if needed
+            new AntPathRequestMatcher("/images/**"), // Add other static resource folders if needed
             new AntPathRequestMatcher("/error"),
             new AntPathRequestMatcher("/public/**"),
-            new AntPathRequestMatcher("/api/firebase/config") // Firebase config endpoint
+            new AntPathRequestMatcher("/api/firebase/config"), // Firebase config endpoint
+            new AntPathRequestMatcher("/api/auth/status") // Auth status endpoint
             // Add any other paths needed for the login process that should bypass security
         );
     }
@@ -40,23 +42,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Authorize requests AFTER ignoring the paths defined above
             .authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
-                    // Allow access to specific non-secured API endpoints if needed
-                    // .requestMatchers("/api/public/**").permitAll()
                     .requestMatchers("/api/secure/**").authenticated()
-                    // You might want to allow access to certain pages without login
-                    // .requestMatchers("/quiz", "/translate", "/words").permitAll()
-                    .anyRequest().authenticated() // Secure everything else by default
+                    .anyRequest().permitAll() // 명시적으로 허용하지 않은 요청은 모두 인증 필요
             )
             .sessionManagement(sessionManagement ->
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                // IF_REQUIRED로 설정하여 세션 유지
+                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
-            .csrf(csrf -> csrf.disable()); // Disable CSRF for stateless API
+            .csrf(csrf -> csrf.disable());
 
-        // Add the Firebase token filter before the standard authentication filter
-        // This filter will only run for requests NOT ignored by webSecurityCustomizer
         http.addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

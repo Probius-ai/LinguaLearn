@@ -6,4 +6,4 @@ firebase:
     id: llm-lingualearn # 기존 firebase.project.id
   service:
     account:
-      path: llm-lingualearn-firebase-adminsdk-fbsvc-3550772ae3.json # 기존 firebase.service.account.path
+      path: llm-lingualearn-firebase-adminsdk-fbsvc-730ed32982.json # 기존 firebase.service.account.path

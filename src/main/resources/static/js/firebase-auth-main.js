@@ -1,49 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 필요한 요소 참조
     const loginButton = document.getElementById('login-btn');
-    const profileLink = document.querySelector('.profile-link'); // Assuming this exists when logged in
-    const loginModal = document.getElementById('login-modal'); // Get modal reference
-    // Ensure these elements are selected *after* the modal exists in the DOM
+    const logoutBtn = document.getElementById('logout-btn');
+    const loginModal = document.getElementById('login-modal');
     const authContainer = document.getElementById('firebaseui-auth-container');
     const authErrorDiv = document.getElementById('auth-error');
 
-    // Check if essential elements exist (especially for logged-in users where modal might not be needed initially)
-    if (!loginModal || !authContainer || !authErrorDiv) {
-        // console.warn("Login modal, auth container, or error div not found. FirebaseUI might not work correctly if login button is clicked.");
-        // If login button exists, it means we are logged out, so these elements *should* exist.
-        if (loginButton) {
-            console.error("Required elements for FirebaseUI (modal, container, error div) not found!");
-        }
-        // If profileLink exists, we are logged in, proceed with logout setup only.
-    }
+    // 초기화 관련 변수
+    let ui = null; // FirebaseUI 인스턴스
+    let firebaseApp = null; // Firebase 앱 인스턴스
 
-
-    let ui = null; // FirebaseUI instance
-    let firebaseApp = null; // Firebase App instance
-
-    // Function to fetch Firebase config from the backend
+    // Firebase 설정 가져오기
     async function fetchFirebaseConfig() {
         try {
-            const response = await fetch('/api/firebase/config'); // Adjust endpoint if needed
+            const response = await fetch('/api/firebase/config');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const config = await response.json();
-            console.log("Firebase config fetched successfully:", config);
+            console.log("Firebase config fetched successfully");
             return config;
         } catch (error) {
             console.error("Could not fetch Firebase config:", error);
-            if (authErrorDiv) authErrorDiv.textContent = 'Error: Could not load login configuration.';
-            // Optionally disable login button or show a persistent error
+            if (authErrorDiv) authErrorDiv.textContent = '로그인 설정을 불러올 수 없습니다.';
             if(loginButton) loginButton.disabled = true;
             return null;
         }
     }
 
-    // Function to call the backend sync endpoint
+    // 백엔드 동기화 함수
     async function syncBackendProfile(idToken) {
-        console.log("Calling backend sync endpoint...");
+        console.log("백엔드 동기화 중...");
         try {
-            const res = await fetch('/api/secure/users/sync', { // Adjust endpoint if needed
+            const res = await fetch('/api/secure/users/sync', {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -53,247 +42,256 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (res.ok) {
                 const userData = await res.json();
-                console.log("Backend sync successful:", userData);
-                // Reload page to reflect server-side session changes (Thymeleaf)
+                console.log("백엔드 동기화 성공");
+                // 페이지 새로고침하여 세션 변경사항 반영
                 window.location.reload();
             } else {
                 const errorText = await res.text();
-                console.error(`Backend sync failed: ${res.status} ${res.statusText}`, errorText);
-                if (authErrorDiv) authErrorDiv.textContent = `Error syncing profile: ${res.status}. Please try again.`;
-                // Handle sync failure - log out the user from Firebase
+                console.error(`백엔드 동기화 실패: ${res.status}`, errorText);
+                if (authErrorDiv) authErrorDiv.textContent = `프로필 동기화 오류: ${res.status}. 다시 시도해주세요.`;
+                // 동기화 실패 시 Firebase 로그아웃
                 if (firebase && firebase.auth) {
                     firebase.auth().signOut();
                 }
-                // Keep the modal open to show the error
             }
         } catch (error) {
-            console.error('Error calling sync API:', error);
-            if (authErrorDiv) authErrorDiv.textContent = 'Error syncing profile: ' + error.message;
-             // Handle sync failure - log out the user from Firebase
+            console.error('동기화 API 호출 오류:', error);
+            if (authErrorDiv) authErrorDiv.textContent = '프로필 동기화 오류: ' + error.message;
             if (firebase && firebase.auth) {
                 firebase.auth().signOut();
             }
-             // Keep the modal open to show the error
         }
     }
 
-
-    // Initialize Firebase and FirebaseUI
+    // 앱 초기화
     async function initializeApp() {
         const firebaseConfig = await fetchFirebaseConfig();
-
         if (!firebaseConfig) {
-            console.error("Firebase initialization failed: No config.");
-            return; // Stop initialization if config fetch failed
+            console.error("Firebase 초기화 실패: 설정 없음");
+            return;
         }
 
-        // Initialize Firebase only once
+        // Firebase 앱 초기화 (한 번만)
         if (!firebaseApp) {
-             try {
-                // Use compat version initialization
+            try {
                 firebaseApp = firebase.initializeApp(firebaseConfig);
-                console.log("Firebase App Initialized.");
-             } catch (e) {
-                 console.error("Error initializing Firebase App:", e);
-                 if (authErrorDiv) authErrorDiv.textContent = 'Error initializing login service.';
-                 if(loginButton) loginButton.disabled = true;
-                 return;
-             }
+                console.log("Firebase 앱 초기화 완료");
+            } catch (e) {
+                console.error("Firebase 앱 초기화 오류:", e);
+                if (authErrorDiv) authErrorDiv.textContent = '로그인 서비스 초기화 오류';
+                if(loginButton) loginButton.disabled = true;
+                return;
+            }
         }
 
-
-        // Initialize FirebaseUI only once
+        // FirebaseUI 초기화 (한 번만)
         if (!ui && firebase && firebase.auth) {
-            // Use compat version
             ui = new firebaseui.auth.AuthUI(firebase.auth());
-            console.log("FirebaseUI Initialized.");
+            console.log("FirebaseUI 초기화 완료");
         } else if (!firebase || !firebase.auth) {
-             console.error("Firebase Auth is not available for FirebaseUI initialization.");
-             if (authErrorDiv) authErrorDiv.textContent = 'Error initializing login components.';
-             if(loginButton) loginButton.disabled = true;
-             return;
+            console.error("FirebaseUI 초기화를 위한 Firebase Auth를 사용할 수 없습니다.");
+            if (authErrorDiv) authErrorDiv.textContent = '로그인 컴포넌트 초기화 오류';
+            if(loginButton) loginButton.disabled = true;
+            return;
         }
 
-        // FirebaseUI config
+        // FirebaseUI 설정
         const uiConfig = {
-            signInSuccessUrl: null, // We handle success manually with callbacks
+            signInSuccessUrl: null, // 콜백으로 성공 처리
             signInOptions: [
-                // Configure providers as needed (use compat version)
                 firebase.auth.GoogleAuthProvider.PROVIDER_ID,
                 firebase.auth.EmailAuthProvider.PROVIDER_ID,
-                // firebase.auth.FacebookAuthProvider.PROVIDER_ID, // Add if needed
+                // 필요시 다른 인증 제공자 추가
             ],
             callbacks: {
                 signInSuccessWithAuthResult: function(authResult, redirectUrl) {
-                    // User successfully signed in.
-                    console.log("Sign-in successful:", authResult);
+                    console.log("로그인 성공");
 
-                    // Close the modal first
+                    // 모달 닫기
                     if (window.closeLoginModal) {
                         window.closeLoginModal();
                     } else {
-                        console.warn("closeLoginModal function not found.");
-                        // Fallback: Hide modal manually if function is not available
+                        console.warn("closeLoginModal 함수를 찾을 수 없습니다.");
                         if(loginModal) loginModal.classList.remove('active');
                         const overlay = document.getElementById('modal-overlay');
                         if(overlay) overlay.classList.remove('active');
                         document.body.style.overflow = '';
                     }
 
-
-                    // Get the ID token
+                    // ID 토큰 가져오기
                     authResult.user.getIdToken().then(async (idToken) => {
-                        console.log("ID Token obtained:", idToken ? 'Yes' : 'No'); // Check if token is obtained
-                        // Sync profile with backend
+                        console.log("ID 토큰 획득 완료");
+                        // 백엔드와 프로필 동기화
                         await syncBackendProfile(idToken);
-                        // Reload is now handled within syncBackendProfile on success
+                        // 성공 시 syncBackendProfile 내에서 페이지 새로고침 처리
                     }).catch(error => {
-                         console.error("Error getting ID token:", error);
-                         if (authErrorDiv) authErrorDiv.textContent = 'Error completing login: ' + error.message;
-                         if (firebase && firebase.auth) {
-                            firebase.auth().signOut(); // Sign out if token fails
-                         }
-                         // Re-open modal to show error? Or rely on authErrorDiv being visible.
-                         // For now, just log out. The modal was already closed.
+                        console.error("ID 토큰 가져오기 오류:", error);
+                        if (authErrorDiv) authErrorDiv.textContent = '로그인 완료 오류: ' + error.message;
+                        if (firebase && firebase.auth) {
+                            firebase.auth().signOut();
+                        }
                     });
-                    // Return false to prevent redirect.
-                    return false;
+                    return false; // 리디렉션 방지
                 },
                 signInFailure: function(error) {
-                    // Handle sign-in errors (e.g., account exists with different credential)
-                    console.error('FirebaseUI sign-in error:', error);
+                    console.error('FirebaseUI 로그인 오류:', error);
                     if (authErrorDiv) {
                         if (error.code === 'firebaseui/anonymous-upgrade-merge-conflict') {
-                             authErrorDiv.textContent = 'Error: Account already exists with different login method.';
+                            authErrorDiv.textContent = '오류: 다른 로그인 방법으로 이미 계정이 존재합니다.';
                         } else if (error.code === 'firebaseui/auth-ui-cancelled') {
-                             console.log('User cancelled login.');
-                             authErrorDiv.textContent = ''; // Clear error if user just closed UI
-                        }
-                        else {
-                             authErrorDiv.textContent = `Login failed: ${error.message} (Code: ${error.code})`;
+                            console.log('사용자가 로그인을 취소했습니다.');
+                            authErrorDiv.textContent = '';
+                        } else {
+                            authErrorDiv.textContent = `로그인 실패: ${error.message} (코드: ${error.code})`;
                         }
                     }
-                    // Keep the modal open to show the error
                 },
                 uiShown: function() {
-                    // Optional: hide a loader if you have one
-                    console.log("FirebaseUI widget shown.");
-                    if (authErrorDiv) authErrorDiv.textContent = ''; // Clear previous errors
+                    console.log("FirebaseUI 위젯 표시됨");
+                    if (authErrorDiv) authErrorDiv.textContent = '';
                 }
-            },
-            // Other UI config options (e.g., tosUrl, privacyPolicyUrl)
-            // tosUrl: '/terms-of-service',
-            // privacyPolicyUrl: '/privacy-policy'
+            }
         };
 
-        // --- Auth State Listener ---
+        // 인증 상태 리스너
         if (firebase && firebase.auth) {
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
-                    // User is signed in. Handled by signInSuccessWithAuthResult callback
-                    // and subsequent page reload after backend sync.
-                    console.log("Auth state changed: User is signed in.", user.uid);
-                    // UI updates (like hiding login button) should ideally be handled
-                    // by the server-side rendering (Thymeleaf) after reload.
-                    // Ensure modal is closed if somehow left open
-                     if (window.closeLoginModal) window.closeLoginModal();
-
+                    console.log("인증 상태 변경: 로그인됨", user.uid);
+                    if (window.closeLoginModal) window.closeLoginModal();
+                    
+                    // Get user information for UI update
+                    const userData = {
+                        name: user.displayName || '사용자',
+                        email: user.email,
+                        photoURL: user.photoURL,
+                        uid: user.uid
+                    };
+                    
+                    // Update UI without page refresh
+                    updateAuthUI(true, userData);
                 } else {
-                    // User is signed out.
-                    console.log("Auth state changed: User is signed out.");
-                    // Ensure login button is visible and profile link is hidden
-                    // This might conflict with Thymeleaf's initial rendering,
-                    // but can be useful for client-side updates if needed.
-                    // if (loginButton) loginButton.style.display = 'block'; // Let Thymeleaf handle this
-                    // if (profileLink) profileLink.style.display = 'none'; // Let Thymeleaf handle this
+                    console.log("인증 상태 변경: 로그아웃됨");
+                    // Update UI to show login button
+                    updateAuthUI(false);
+                    // 서버 세션 상태 확인 (백엔드 세션은 별도로 존재할 수 있음)
+                    checkServerSession();
+                }
+            });
+            
+            // 토큰 갱신 리스너
+            firebase.auth().onIdTokenChanged(async (user) => {
+                if (user) {
+                    // 토큰 갱신 시 백엔드에 알림
+                    const token = await user.getIdToken();
+                    // 필요시 백엔드에 토큰 갱신 요청
+                    console.log("ID 토큰이 갱신되었습니다");
                 }
             });
         } else {
-             console.error("Firebase Auth not available for setting up Auth State Listener.");
+            console.error("인증 상태 리스너 설정을 위한 Firebase Auth를 사용할 수 없습니다.");
         }
 
+        // 서버 세션 상태 확인 함수
+        async function checkServerSession() {
+            try {
+                const response = await fetch('/api/auth/status');
+                if (response.ok) {
+                    // 서버 세션이 있지만 Firebase 상태는 로그아웃 - 페이지 새로고침
+                    console.log("서버 세션은 있으나 Firebase 상태가 로그아웃됨 - 새로고침");
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error("서버 세션 확인 오류:", error);
+            }
+        }
 
-        // --- Event Listeners ---
-
-        // Listener for the main login button to open the modal AND start FirebaseUI
+        // 로그인 버튼 이벤트 리스너
         if (loginButton) {
             loginButton.addEventListener('click', () => {
-                // Ensure Firebase is initialized before starting UI
-                // Also check if the necessary DOM elements for UI are present
                 if (firebaseApp && ui && authContainer) {
-                     console.log("Login button clicked, starting FirebaseUI.");
-                     // Start the FirebaseUI Widget.
-                     // The login-modal.js handles showing the modal itself.
-                     // Ensure the container is visible *inside* the modal before starting.
-                     authContainer.style.display = 'block'; // Make sure container is visible
-                     ui.start('#firebaseui-auth-container', uiConfig);
+                    console.log("로그인 버튼 클릭, FirebaseUI 시작");
+                    authContainer.style.display = 'block';
+                    ui.start('#firebaseui-auth-container', uiConfig);
                 } else {
-                    console.error("Firebase not ready or auth container not found, cannot start UI.");
-                    if (authErrorDiv) authErrorDiv.textContent = 'Login service is not ready. Please try again later.';
-                    // Attempt re-initialization or show error
+                    console.error("Firebase가 준비되지 않았거나 인증 컨테이너를 찾을 수 없어 UI를 시작할 수 없습니다.");
+                    if (authErrorDiv) authErrorDiv.textContent = '로그인 서비스가 준비되지 않았습니다. 나중에 다시 시도해주세요.';
                     if (!firebaseApp || !ui) {
-                        initializeApp(); // Try to initialize again if Firebase/UI failed
+                        initializeApp();
                     }
                 }
             });
-        } else {
-             // console.warn("Login button (#login-btn) not found. Assuming user is logged in.");
-             // This is expected if the user is logged in.
         }
 
-        // Add logout functionality (e.g., clicking the profile link/avatar)
-        if (profileLink) {
-            profileLink.addEventListener('click', (event) => {
-                event.preventDefault(); // Prevent navigation if it's just for logout trigger
-
-                // Check if it's part of a dropdown, if so, let dropdown handle it.
-                // This assumes the profile link itself isn't the only logout trigger.
-                // If the dropdown menu link '/logout' is clicked, this listener might not be needed,
-                // OR it should only handle clicks on the avatar itself if that's the intended trigger.
-                // For simplicity, let's assume clicking the avatar/link *can* trigger logout confirmation.
-
-                // Find if the click is within a dropdown menu link
-                 const dropdownLink = event.target.closest('.dropdown-menu a[href="/logout"]');
-                 if (dropdownLink) {
-                     // Let the default link behavior handle the /logout redirect
-                     return;
-                 }
-
-                // If the click was on the avatar or profile link itself (not the dropdown logout)
-                const confirmLogout = confirm("로그아웃 하시겠습니까?"); // Ask for confirmation
-                if (confirmLogout) {
-                    console.log("Logging out via profile link click...");
-                    if (firebase && firebase.auth) {
-                        firebase.auth().signOut().then(() => {
-                            console.log('Signed out successfully from Firebase.');
-                            // Redirect to a logout endpoint on your server
-                            // This endpoint should clear the server-side session/cookie
-                            window.location.href = '/logout'; // Adjust endpoint if needed
-                        }).catch((error) => {
-                            console.error('Sign out error', error);
-                            alert('로그아웃 중 오류가 발생했습니다.');
-                        });
-                    } else {
-                         console.error("Firebase auth not available for sign out.");
-                         // Fallback: Just redirect to server logout
-                         window.location.href = '/logout';
-                    }
-                }
-            });
-        } else {
-            // console.warn("Profile link (.profile-link) not found. Logout trigger might be missing.");
-            // If using Thymeleaf, this element might not exist when logged out, which is expected.
+        // 로그아웃 기능 추가
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', handleLogout);
         }
-
-    } // End of initializeApp
-
-    // Start the initialization process only if not logged in (login button exists)
-    // or if logged in (profile link exists - for logout functionality)
-    if (loginButton || profileLink) {
-        initializeApp();
-    } else {
-        console.log("Neither login button nor profile link found. Skipping Firebase auth initialization.");
     }
 
+    // 로그아웃 처리 함수
+    function handleLogout() {
+        const confirmLogout = confirm("로그아웃 하시겠습니까?");
+        if (confirmLogout) {
+            console.log("로그아웃 중...");
+            if (firebase && firebase.auth) {
+                firebase.auth().signOut().then(() => {
+                    console.log('Firebase에서 로그아웃 성공');
+                    window.location.href = '/logout'; // 서버 세션도 로그아웃
+                }).catch((error) => {
+                    console.error('로그아웃 오류', error);
+                    alert('로그아웃 중 오류가 발생했습니다.');
+                    // 오류가 발생해도 서버 세션은 로그아웃 시도
+                    window.location.href = '/logout';
+                });
+            } else {
+                console.error("로그아웃을 위한 Firebase auth를 사용할 수 없습니다.");
+                window.location.href = '/logout'; // Firebase가 없어도 서버 세션은 로그아웃
+            }
+        }
+    }
 
-}); // End of DOMContentLoaded
+    /**
+     * Updates the authentication UI based on user login state
+     * @param {boolean} isLoggedIn - Whether user is logged in
+     * @param {Object} userData - User data object with name, email, etc.
+     */
+    function updateAuthUI(isLoggedIn, userData = null) {
+        const loginBtn = document.getElementById('login-btn');
+        const userLoggedIn = document.querySelector('.user-logged-in');
+        
+        if (!loginBtn || !userLoggedIn) {
+            console.warn('Auth UI elements not found in DOM');
+            return;
+        }
+        
+        if (isLoggedIn && userData) {
+            // Hide login button, show user profile section
+            loginBtn.style.display = 'none';
+            userLoggedIn.style.display = 'flex';
+            
+            // Update avatar with first letter of user's name
+            const avatar = userLoggedIn.querySelector('.avatar');
+            if (avatar && userData.name) {
+                avatar.textContent = userData.name.substring(0, 1).toUpperCase();
+            }
+            
+            // Update profile link if needed
+            const profileLink = userLoggedIn.querySelector('.profile-link');
+            if (profileLink) {
+                profileLink.title = `${userData.name}님의 프로필`;
+            }
+        } else {
+            // Show login button, hide user profile section
+            loginBtn.style.display = 'block';
+            userLoggedIn.style.display = 'none';
+        }
+    }
+
+    // 초기화 시작 (로그인 버튼이나 로그아웃 버튼이 있을 때만)
+    if (loginButton || logoutBtn) {
+        initializeApp();
+    } else {
+        console.log("로그인 버튼이나 로그아웃 버튼을 찾을 수 없습니다. Firebase 인증 초기화 건너뜀.");
+    }
+});

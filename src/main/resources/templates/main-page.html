@@ -48,10 +48,16 @@
                         <button data-theme="green">Green</button>
                     </div>
                 </div>
-                <button class="btn login-btn" id="login-btn" th:if="${session.user == null}">로그인</button>
-                <a th:if="${session.user != null}" th:href="@{/profile}" class="profile-link">
-                    <div class="avatar" th:text="${#strings.substring(session.user.name, 0, 1)}">U</div>
-                </a>
+                <!-- 로그인 버튼 -->
+                <button class="btn login-btn" id="login-btn">로그인</button>
+
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div class="user-logged-in" style="display: none;">
+                    <a href="/profile" class="profile-link" title="프로필 보기">
+                        <div class="avatar">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
             </div>
         </div>
     </header>

@@ -33,6 +33,7 @@ dependencies {
 	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
 	implementation 'com.google.firebase:firebase-admin:9.3.0' // Firebase Admin SDK 최신 버전으로 업데이트
 	compileOnly 'org.projectlombok:lombok'
+	implementation 'javax.servlet:javax.servlet-api:4.0.1'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
