@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퀴즈 선택 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+    
+    <style>
+        /* 퀴즈 선택 페이지 스타일 */
+        .quiz-selection-container {
+            max-width: 1000px;
+            margin: 2rem auto 4rem;
+        }
+        
+        .quiz-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .quiz-card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .quiz-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px var(--shadow);
+        }
+        
+        .quiz-card-img {
+            height: 180px;
+            overflow: hidden;
+        }
+        
+        .quiz-card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .quiz-card:hover .quiz-card-img img {
+            transform: scale(1.05);
+        }
+        
+        .quiz-card-content {
+            padding: 1.5rem;
+        }
+        
+        .quiz-card-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-primary);
+        }
+        
+        .quiz-card-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            min-height: 4.5rem;
+        }
+        
+        .quiz-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .difficulty {
+            display: flex;
+            gap: 0.3rem;
+        }
+        
+        .difficulty i {
+            color: var(--accent);
+        }
+        
+        .difficulty i.inactive {
+            color: var(--gray-300);
+        }
+        
+        .quiz-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .quiz-card-link {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .coming-soon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--warning);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 2;
+        }
+        
+        .section-description {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">홈</a></li>
+                    <li><a th:href="@{/quiz}" class="active">단어 퀴즈</a></li>
+                    <li><a th:href="@{/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/words}">추천 단어</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                
+                <!-- 로그인 버튼 (세션에 사용자가 없을 때만 표시) -->
+                <button th:if="${session.user == null}" class="btn login-btn" id="login-btn">로그인</button>
+
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div th:if="${session.user != null}" class="user-logged-in">
+                    <a href="/profile" class="profile-link" title="프로필 보기">
+                        <div class="avatar" th:text="${#strings.substring(session.user.displayName, 0, 1)}">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main>
+        <div class="container quiz-selection-container">
+            <h1 class="section-title">퀴즈 선택</h1>
+            <p class="section-description">
+                다양한 유형의 퀴즈로 언어 실력을 향상시켜보세요. 이미지 퀴즈, 단어 맞추기, 듣기 퀴즈 등
+                다양한 방식으로 학습할 수 있습니다.
+            </p>
+            
+            <div class="quiz-types-grid">
+                <!-- 이미지 퀴즈 -->
+                <div class="quiz-card" style="position: relative;">
+                    <a th:href="@{/quiz/image}" class="quiz-card-link"></a>
+                    <div class="quiz-card-img">
+                        <img th:src="@{/images/image-quiz.jpg}" alt="이미지 퀴즈" 
+                             src="https://images.unsplash.com/photo-1519389950473-47ba0277781c">
+                    </div>
+                    <div class="quiz-card-content">
+                        <h3>그림 단어 퀴즈</h3>
+                        <p>이미지를 보고 알맞은 단어를 선택하는 퀴즈입니다. 시각적 기억력을 향상시킵니다.</p>
+                        <div class="quiz-card-footer">
+                            <div class="difficulty">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star inactive"></i>
+                            </div>
+                            <div class="quiz-count">문제 수: 10</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 단어 맞추기 퀴즈 -->
+                <div class="quiz-card" style="position: relative;">
+                    <span class="coming-soon">출시 예정</span>
+                    <div class="quiz-card-img">
+                        <img th:src="@{/images/word-quiz.jpg}" alt="단어 맞추기 퀴즈"
+                             src="https://images.unsplash.com/photo-1543109740-4bdb38fda756">
+                    </div>
+                    <div class="quiz-card-content">
+                        <h3>단어 맞추기</h3>
+                        <p>뜻을 보고 알맞은 단어를 입력하는 퀴즈입니다. 스펠링과 어휘력을 향상시킵니다.</p>
+                        <div class="quiz-card-footer">
+                            <div class="difficulty">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="quiz-count">문제 수: 15</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 듣기 퀴즈 -->
+                <div class="quiz-card" style="position: relative;">
+                    <span class="coming-soon">출시 예정</span>
+                    <div class="quiz-card-img">
+                        <img th:src="@{/images/listening-quiz.jpg}" alt="듣기 퀴즈"
+                             src="https://images.unsplash.com/photo-1516057747705-0609711c769b">
+                    </div>
+                    <div class="quiz-card-content">
+                        <h3>듣기 퀴즈</h3>
+                        <p>발음을 듣고 알맞은 단어나 문장을 선택하는 퀴즈입니다. 청취력을 향상시킵니다.</p>
+                        <div class="quiz-card-footer">
+                            <div class="difficulty">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="quiz-count">문제 수: 10</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 문장 완성하기 -->
+                <div class="quiz-card" style="position: relative;">
+                    <span class="coming-soon">출시 예정</span>
+                    <div class="quiz-card-img">
+                        <img th:src="@{/images/sentence-quiz.jpg}" alt="문장 완성하기"
+                             src="https://images.unsplash.com/photo-1455390582262-044cdead277a">
+                    </div>
+                    <div class="quiz-card-content">
+                        <h3>문장 완성하기</h3>
+                        <p>빈 칸에 알맞은 단어를 넣어 문장을 완성하는 퀴즈입니다. 문법과 맥락 이해력을 향상시킵니다.</p>
+                        <div class="quiz-card-footer">
+                            <div class="difficulty">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="quiz-count">문제 수: 8</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 로그인 유도 메시지 (비로그인 사용자에게만 표시) -->
+            <div th:if="${session.user == null}" class="login-prompt" style="text-align: center; margin-top: 3rem; padding: 1.5rem; background-color: var(--bg-secondary); border-radius: 10px;">
+                <h3>학습 진행 상황을 저장하고 싶으신가요?</h3>
+                <p>로그인하시면 퀴즈 결과와 학습 진행 상황이 저장됩니다.</p>
+                <button class="btn btn-primary" style="margin-top: 1rem;" onclick="document.getElementById('login-btn').click()">
+                    로그인하기
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a href="/quiz/image">그림 단어 퀴즈</a></li>
+                            <li><a href="/translate">문장 번역</a></li>
+                            <li><a href="/words">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 로그인 모달 -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <h2>로그인 또는 회원가입</h2>
+            </div>
+            <div class="modal-body">
+                <div id="firebaseui-auth-container"></div>
+                <div id="auth-error" style="color: var(--error); margin-top: 15px; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- 스크립트 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <script th:src="@{/js/login-modal.js}" defer></script>
+    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+</body>
+</html>

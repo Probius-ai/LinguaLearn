@@ -36,6 +36,20 @@ public class MainController {
         // This returns the name of the Thymeleaf template file (without .html)
         return "main-page";
     }
+    
+    // 퀴즈 메인 페이지 매핑
+    @GetMapping("/quiz")
+    public String quizMain(Model model, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        boolean isLoggedIn = (user != null);
+        model.addAttribute("isLoggedIn", isLoggedIn);
+        
+        if (isLoggedIn) {
+            model.addAttribute("username", user.getDisplayName());
+        }
+        
+        return "quiz-main";
+    }
 
     // Add other mappings for your application if needed
 }
