@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어 관리 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+    
+    <style>
+        /* 관리자 페이지 스타일 */
+        .admin-container {
+            max-width: 1200px;
+            margin: 2rem auto 4rem;
+        }
+        
+        .breadcrumb {
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--text-secondary);
+        }
+        
+        .breadcrumb a:hover {
+            color: var(--accent);
+        }
+        
+        .breadcrumb .separator {
+            margin: 0 0.5rem;
+        }
+        
+        .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-heading h1 {
+            margin: 0;
+        }
+        
+        /* 필터 영역 */
+        .filter-bar {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: flex-end;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        /* 단어 테이블 */
+        .words-table-container {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px var(--shadow);
+            overflow-x: auto;
+        }
+        
+        .words-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .words-table th {
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .words-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        
+        .words-table tr:hover {
+            background-color: var(--bg-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-icon:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .btn-edit:hover {
+            background-color: var(--accent);
+        }
+        
+        .btn-delete:hover {
+            background-color: var(--error);
+            border-color: var(--error);
+        }
+        
+        /* 모달 */
+        .modal-content {
+            max-width: 600px;
+        }
+        
+        .form-row {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-row label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .form-row input, .form-row select, .form-row textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+        
+        .form-row textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        /* 페이지네이션 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            gap: 0.5rem;
+        }
+        
+        .pagination .page-item {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+        
+        .pagination .page-item:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .pagination .page-item.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .language-tag, .level-tag {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .language-tag {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--accent);
+        }
+        
+        .level-tag.beginner {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+        }
+        
+        .level-tag.intermediate {
+            background-color: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+        }
+        
+        .level-tag.advanced {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+        }
+        
+        /* 알림 메시지 */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 1px solid #4caf50;
+        }
+        
+        .alert-error {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 1px solid #f44336;
+        }
+        
+        .alert-warning {
+            background-color: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+            border: 1px solid #ff9800;
+        }
+        
+        /* 로딩 표시 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--bg-secondary);
+            border-top: 5px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">홈</a></li>
+                    <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                    <li><a th:href="@{/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/words}">추천 단어</a></li>
+                    <li><a th:href="@{/admin}" class="active">관리자</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div th:if="${user != null}" class="user-logged-in">
+                    <a href="/profile" class="profile-link" title="프로필 보기">
+                        <div class="avatar" th:text="${#strings.substring(user.displayName, 0, 1)}">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main>
+        <div class="container admin-container">
+            <div class="breadcrumb">
+                <a th:href="@{/}">홈</a>
+                <span class="separator">/</span>
+                <a th:href="@{/admin}">관리자</a>
+                <span class="separator">/</span>
+                <span>단어 관리</span>
+            </div>
+            
+            <div class="page-heading">
+                <h1>단어 관리</h1>
+                <button class="btn btn-primary" id="addWordBtn">
+                    <i class="fas fa-plus"></i> 단어 추가
+                </button>
+            </div>
+            
+            <!-- 알림 메시지 (필요시 표시) -->
+            <div id="alertBox" style="display: none;" class="alert">
+                <!-- 알림 내용은 JS로 동적 처리 -->
+            </div>
+            
+            <!-- 필터 영역 -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label for="filterLanguage">언어</label>
+                    <select id="filterLanguage">
+                        <option value="">모든 언어</option>
+                        <option value="english">영어</option>
+                        <option value="japanese">일본어</option>
+                        <option value="chinese">중국어</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterLevel">레벨</label>
+                    <select id="filterLevel">
+                        <option value="">모든 레벨</option>
+                        <option value="beginner">초급</option>
+                        <option value="intermediate">중급</option>
+                        <option value="advanced">고급</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="searchWord">검색</label>
+                    <input type="text" id="searchWord" placeholder="단어 검색...">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-primary" id="searchBtn">검색</button>
+                    <button class="btn btn-secondary" id="resetFilterBtn">초기화</button>
+                </div>
+            </div>
+            
+            <!-- 단어 테이블 -->
+            <div class="words-table-container">
+                <table class="words-table">
+                    <thead>
+                        <tr>
+                            <th>단어</th>
+                            <th>번역</th>
+                            <th>언어</th>
+                            <th>레벨</th>
+                            <th>액션</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wordsTableBody">
+                        <!-- 데이터는 JS로 동적 로드 -->
+                        <tr>
+                            <td colspan="5" class="text-center">로딩 중...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 페이지네이션 -->
+            <div class="pagination" id="pagination">
+                <!-- 페이지네이션은 JS로 동적 생성 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 단어 추가/수정 모달 -->
+    <div class="modal" id="wordModal">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <h2 id="modalTitle">단어 추가</h2>
+            </div>
+            <div class="modal-body">
+                <form id="wordForm">
+                    <input type="hidden" id="wordId">
+                    <div class="form-row">
+                        <label for="wordText">단어</label>
+                        <input type="text" id="wordText" required>
+                    </div>
+                    <div class="form-row">
+                        <label for="wordTranslation">번역</label>
+                        <input type="text" id="wordTranslation" required>
+                    </div>
+                    <div class="form-row">
+                        <label for="wordLanguage">언어</label>
+                        <select id="wordLanguage" required>
+                            <option value="english">영어</option>
+                            <option value="japanese">일본어</option>
+                            <option value="chinese">중국어</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="wordLevel">레벨</label>
+                        <select id="wordLevel" required>
+                            <option value="beginner">초급</option>
+                            <option value="intermediate">중급</option>
+                            <option value="advanced">고급</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="wordPronunciation">발음</label>
+                        <input type="text" id="wordPronunciation">
+                    </div>
+                    <div class="form-row">
+                        <label for="wordExample">예문</label>
+                        <textarea id="wordExample"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelWordBtn">취소</button>
+                        <button type="submit" class="btn btn-primary" id="saveWordBtn">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal" id="deleteConfirmModal">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <h2>단어 삭제</h2>
+            </div>
+            <div class="modal-body">
+                <p>정말로 이 단어를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" id="cancelDeleteBtn">취소</button>
+                    <button class="btn btn-error" id="confirmDeleteBtn">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a href="/quiz/image">그림 단어 퀴즈</a></li>
+                            <li><a href="/translate">문장 번역</a></li>
+                            <li><a href="/words">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase 스크립트 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+    
+    <!-- 단어 관리 스크립트 -->
+    <script th:src="@{/js/admin-word-management.js}" defer></script>
+</body>
+</html>
