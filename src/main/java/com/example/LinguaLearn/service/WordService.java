@@ -241,12 +241,32 @@ public class WordService {
         
         // 다른 언어나 레벨로 이동하는 경우
         if (!language.equals(wordDto.getLanguage()) || !level.equals(wordDto.getLevel())) {
-            // 기존 문서 삭제
-            ApiFuture<WriteResult> deleteResult = docRef.delete();
-            deleteResult.get();
+            // 트랜잭션 사용하여 원자적 업데이트 수행
+            firestore.runTransaction(transaction -> {
+                // 기존 문서 삭제
+                transaction.delete(docRef);
+                
+                // 새 위치에 추가
+                DocumentReference newDocRef = firestore
+                    .collection("languages")
+                    .document(wordDto.getLanguage())
+                    .collection("levels")
+                    .document(wordDto.getLevel())
+                    .collection("words")
+                    .document(id);
+                    
+                Word word = new Word();
+                word.setText(wordDto.getText());
+                word.setTranslation(wordDto.getTranslation());
+                word.setPronunciation(wordDto.getPronunciation());
+                word.setExampleSentence(wordDto.getExampleSentence());
+                
+                transaction.set(newDocRef, word);
+                return null;
+            }).get();
             
-            // 새 위치에 추가
-            return createWord(wordDto);
+            logger.info("단어 이동 완료: {}({})", wordDto.getText(), id);
+            return wordDto;
         }
         
         // 동일한 위치에서 업데이트하는 경우
@@ -262,7 +282,7 @@ public class WordService {
         
         logger.info("단어 업데이트 완료: {}({})", word.getText(), id);
         return wordDto;
-    }
+    }    
     
     /**
      * 단어 삭제
