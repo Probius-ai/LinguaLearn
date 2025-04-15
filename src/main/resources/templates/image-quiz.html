@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>그림 단어 퀴즈 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/image-quiz.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+</head>
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">홈</a></li>
+                    <li><a th:href="@{/quiz}" class="active">단어 퀴즈</a></li>
+                    <li><a th:href="@{/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/words}">추천 단어</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                
+                <!-- 로그인 버튼 (세션에 사용자가 없을 때만 표시) -->
+                <button th:if="${session.user == null}" class="btn login-btn" id="login-btn">로그인</button>
+
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div th:if="${session.user != null}" class="user-logged-in">
+                    <a href="/profile" class="profile-link" title="프로필 보기">
+                        <div class="avatar" th:text="${#strings.substring(session.user.displayName, 0, 1)}">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main>
+        <div class="container">
+            <div class="quiz-container">
+                <h1 class="section-title">📚 그림 단어 퀴즈</h1>
+
+                <!-- 언어 선택 영역 -->
+                <div id="language-select" class="selection-area">
+                    <h2>언어를 선택하세요</h2>
+                    <div class="language-buttons">
+                        <button class="btn btn-language" onclick="selectLanguage('english')">
+                            <i class="fas fa-flag-usa"></i> 영어
+                        </button>
+                        <button class="btn btn-language" onclick="selectLanguage('japanese')">
+                            <i class="fas fa-torii-gate"></i> 일본어
+                        </button>
+                        <button class="btn btn-language" onclick="selectLanguage('chinese')">
+                            <i class="fas fa-yen-sign"></i> 중국어
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 난이도 선택 영역 -->
+                <div id="level-select" class="selection-area" style="display:none;">
+                    <h2>난이도를 선택하세요</h2>
+                    <div class="level-buttons">
+                        <button class="btn btn-level" onclick="startQuiz('beginner')">
+                            <i class="fas fa-seedling"></i> 초급
+                        </button>
+                        <button class="btn btn-level" onclick="startQuiz('intermediate')">
+                            <i class="fas fa-tree"></i> 중급
+                        </button>
+                        <button class="btn btn-level" onclick="startQuiz('advanced')">
+                            <i class="fas fa-crown"></i> 고급
+                        </button>
+                    </div>
+                    <button class="btn btn-back" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i> 뒤로가기
+                    </button>
+                </div>
+
+                <!-- 퀴즈 영역 -->
+                <div id="quiz-section" class="quiz-area" style="display:none;">
+                    <div class="quiz-status">
+                        <span id="quiz-counter">문제 1/10</span>
+                        <span id="quiz-score">점수: 0</span>
+                    </div>
+                    
+                    <div class="image-box">
+                        <img id="quiz-image" src="" alt="퀴즈 이미지" />
+                    </div>
+                    
+                    <div class="options" id="options-box"></div>
+                    
+                    <div class="result-area">
+                        <p id="result"></p>
+                        <div id="score-update" style="display:none;">
+                            <i class="fas fa-medal"></i> 점수 +1!
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button id="next-btn" class="btn btn-primary" style="display:none;">
+                            다음 문제 <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button id="finish-btn" class="btn btn-secondary" onclick="goToLanguageSelect()">
+                            종료하기
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 로딩 표시 -->
+                <div id="loading" class="loading-area" style="display:none;">
+                    <div class="spinner"></div>
+                    <p>문제를 가져오는 중...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a href="/quiz/image">그림 단어 퀴즈</a></li>
+                            <li><a href="/translate">문장 번역</a></li>
+                            <li><a href="/words">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 로그인 모달 -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <h2>로그인 또는 회원가입</h2>
+            </div>
+            <div class="modal-body">
+                <div id="firebaseui-auth-container"></div>
+                <div id="auth-error" style="color: var(--error); margin-top: 15px; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- 스크립트 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <script th:src="@{/js/login-modal.js}" defer></script>
+    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+    <script th:src="@{/js/image-quiz.js}" defer></script>
+</body>
+</html>
