@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinguaLearn - 다국어 학습 플랫폼</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- FirebaseUI CSS -->
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
+
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+    <script th:src="@{/js/login-modal.js}" defer></script>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <!-- FirebaseUI -->
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <!-- Your Firebase Auth Main Script -->
+    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+</head>
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}" class="active">홈</a></li>
+                    <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                    <li><a th:href="@{/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/words}">추천 단어</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                <!-- 로그인 버튼 -->
+                <button class="btn login-btn" id="login-btn">로그인</button>
+
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div class="user-logged-in" style="display: none;">
+                    <a href="/profile" class="profile-link" title="프로필 보기">
+                        <div class="avatar">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 히어로 섹션 -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>언어의 세계로 오신 것을 환영합니다</h2>
+                <p>재미있고 효과적인 방법으로 새로운 언어를 배워보세요.</p>
+                <div class="hero-cta">
+                    <a href="#features" class="btn btn-primary">시작하기</a>
+                    <a href="#" class="btn btn-secondary">더 알아보기</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img th:src="@{/images/hero-image.svg}" alt="언어 학습 이미지">
+            </div>
+        </div>
+    </section>
+
+    <!-- 주요 기능 소개 -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">학습 기능</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-images"></i>
+                    </div>
+                    <h3>그림 단어 퀴즈</h3>
+                    <p>시각적 요소를 통해 단어를 쉽고 재미있게 학습하세요.</p>
+                    <a href="#" class="feature-link">바로가기 <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-language"></i>
+                    </div>
+                    <h3>문장 번역</h3>
+                    <p>정확한 번역으로 언어 이해도를 높이세요.</p>
+                    <a href="#" class="feature-link">바로가기 <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3>일일 추천 단어</h3>
+                    <p>매일 새로운 단어로 어휘력을 향상시키세요.</p>
+                    <a href="#" class="feature-link">바로가기 <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 일일 추천 단어 섹션 -->
+    <section class="daily-words">
+        <div class="container">
+            <h2 class="section-title">오늘의 추천 단어</h2>
+            <div class="word-cards">
+                <div class="word-card" th:each="word : ${dailyWords}">
+                    <div class="word-header">
+                        <span class="language-tag" th:text="${word.language}">영어</span>
+                    </div>
+                    <h3 class="word" th:text="${word.original}">Example</h3>
+                    <p class="pronunciation" th:text="${word.pronunciation}">[ɪɡˈzæmpəl]</p>
+                    <p class="translation" th:text="${word.translation}">예시</p>
+                    <p class="example-sentence" th:text="${word.exampleSentence}">This is an example sentence.</p>
+                </div>
+                <!-- 더미 데이터: 타임리프로 대체될 예정 -->
+                <div class="word-card">
+                    <div class="word-header">
+                        <span class="language-tag">영어</span>
+                    </div>
+                    <h3 class="word">Serendipity</h3>
+                    <p class="pronunciation">[ˌserənˈdɪpəti]</p>
+                    <p class="translation">우연한 행운</p>
+                    <p class="example-sentence">Finding that book was pure serendipity.</p>
+                </div>
+                <div class="word-card">
+                    <div class="word-header">
+                        <span class="language-tag">스페인어</span>
+                    </div>
+                    <h3 class="word">Mariposa</h3>
+                    <p class="pronunciation">[maɾiˈposa]</p>
+                    <p class="translation">나비</p>
+                    <p class="example-sentence">Una mariposa azul voló por la ventana.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a href="#">그림 단어 퀴즈</a></li>
+                            <li><a href="#">문장 번역</a></li>
+                            <li><a href="#">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 로그인 모달 -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <h2>로그인 또는 회원가입</h2> <!-- Title updated -->
+            </div>
+            <div class="modal-body">
+                <!-- FirebaseUI Container -->
+                <div id="firebaseui-auth-container"></div>
+                <!-- Error Display Area -->
+                <div id="auth-error" style="color: var(--error); margin-top: 15px; text-align: center;"></div>
+                <!-- Removed original form and social buttons -->
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-overlay"></div>
+</body>
+</html>

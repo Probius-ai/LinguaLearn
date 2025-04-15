@@ -1,6 +1,5 @@
 package com.example.LinguaLearn.config;
 
-import com.example.LinguaLearn.filter.FirebaseTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +10,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import com.example.LinguaLearn.filter.FirebaseTokenFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -23,35 +24,35 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring().requestMatchers(
-            new AntPathRequestMatcher("/"), // Root path for static index.html or welcome page
-            new AntPathRequestMatcher("/login.html"),
+            new AntPathRequestMatcher("/"), // Main page served by controller
+            new AntPathRequestMatcher("/login.html"), // If you have a separate login page
             new AntPathRequestMatcher("/favicon.ico"),
-            new AntPathRequestMatcher("/*.js"),
-            new AntPathRequestMatcher("/*.css"),
+            // Correctly ignore static resources in subdirectories
+            new AntPathRequestMatcher("/css/**"),
+            new AntPathRequestMatcher("/js/**"),
+            new AntPathRequestMatcher("/images/**"), // Add other static resource folders if needed
             new AntPathRequestMatcher("/error"),
             new AntPathRequestMatcher("/public/**"),
-            new AntPathRequestMatcher("/api/firebase/config") // <<< Explicitly ignore the config endpoint
+            new AntPathRequestMatcher("/api/firebase/config"), // Firebase config endpoint
+            new AntPathRequestMatcher("/api/auth/status") // Auth status endpoint
+            // Add any other paths needed for the login process that should bypass security
         );
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Authorize requests AFTER ignoring the paths defined above
             .authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
-                    // Secure API endpoints require authentication
                     .requestMatchers("/api/secure/**").authenticated()
-                    // Any other request not ignored above must be authenticated
-                    .anyRequest().authenticated()
+                    .anyRequest().permitAll() // 명시적으로 허용하지 않은 요청은 모두 인증 필요
             )
             .sessionManagement(sessionManagement ->
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                // IF_REQUIRED로 설정하여 세션 유지
+                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
-            .csrf(csrf -> csrf.disable()); // Disable CSRF for stateless API
+            .csrf(csrf -> csrf.disable());
 
-        // Add the Firebase token filter before the standard authentication filter
-        // This filter will only run for requests NOT ignored by webSecurityCustomizer
         http.addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
