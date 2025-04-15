@@ -5,10 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginModal = document.getElementById('login-modal');
     const authContainer = document.getElementById('firebaseui-auth-container');
     const authErrorDiv = document.getElementById('auth-error');
+    const userLoggedInDiv = document.querySelector('.user-logged-in');
 
     // 초기화 관련 변수
     let ui = null; // FirebaseUI 인스턴스
     let firebaseApp = null; // Firebase 앱 인스턴스
+    let isInitializing = true; // 초기화 중 표시
 
     // Firebase 설정 가져오기
     async function fetchFirebaseConfig() {
@@ -42,32 +44,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (res.ok) {
                 const userData = await res.json();
-                console.log("백엔드 동기화 성공");
+                console.log("백엔드 동기화 성공:", userData);
                 // 페이지 새로고침하여 세션 변경사항 반영
                 window.location.reload();
+                return true;
             } else {
                 const errorText = await res.text();
                 console.error(`백엔드 동기화 실패: ${res.status}`, errorText);
                 if (authErrorDiv) authErrorDiv.textContent = `프로필 동기화 오류: ${res.status}. 다시 시도해주세요.`;
-                // 동기화 실패 시 Firebase 로그아웃
-                if (firebase && firebase.auth) {
-                    firebase.auth().signOut();
-                }
+                return false;
             }
         } catch (error) {
             console.error('동기화 API 호출 오류:', error);
             if (authErrorDiv) authErrorDiv.textContent = '프로필 동기화 오류: ' + error.message;
-            if (firebase && firebase.auth) {
-                firebase.auth().signOut();
+            return false;
+        }
+    }
+
+    // 서버 세션 상태 확인 함수
+    async function checkServerSession() {
+        try {
+            const response = await fetch('/api/auth/status');
+            if (response.ok) {
+                const data = await response.json();
+                return data;
             }
+            return null;
+        } catch (error) {
+            console.error("서버 세션 확인 오류:", error);
+            return null;
         }
     }
 
     // 앱 초기화
     async function initializeApp() {
+        // 먼저 서버 세션 상태 확인
+        const sessionData = await checkServerSession();
+        if (sessionData) {
+            console.log("서버 세션 확인됨:", sessionData);
+            // 세션이 있으면 UI 업데이트
+            updateAuthUI(true, {
+                name: sessionData.displayName || '사용자',
+                email: sessionData.email,
+                uid: sessionData.uid
+            });
+        }
+
         const firebaseConfig = await fetchFirebaseConfig();
         if (!firebaseConfig) {
             console.error("Firebase 초기화 실패: 설정 없음");
+            isInitializing = false;
             return;
         }
 
@@ -77,10 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 firebaseApp = firebase.initializeApp(firebaseConfig);
                 console.log("Firebase 앱 초기화 완료");
             } catch (e) {
-                console.error("Firebase 앱 초기화 오류:", e);
-                if (authErrorDiv) authErrorDiv.textContent = '로그인 서비스 초기화 오류';
-                if(loginButton) loginButton.disabled = true;
-                return;
+                if (e.code !== 'app/duplicate-app') {
+                    console.error("Firebase 앱 초기화 오류:", e);
+                    if (authErrorDiv) authErrorDiv.textContent = '로그인 서비스 초기화 오류';
+                    if(loginButton) loginButton.disabled = true;
+                    isInitializing = false;
+                    return;
+                } else {
+                    firebaseApp = firebase.app();
+                    console.log("기존 Firebase 앱 사용");
+                }
             }
         }
 
@@ -92,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("FirebaseUI 초기화를 위한 Firebase Auth를 사용할 수 없습니다.");
             if (authErrorDiv) authErrorDiv.textContent = '로그인 컴포넌트 초기화 오류';
             if(loginButton) loginButton.disabled = true;
+            isInitializing = false;
             return;
         }
 
@@ -101,10 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
             signInOptions: [
                 firebase.auth.GoogleAuthProvider.PROVIDER_ID,
                 firebase.auth.EmailAuthProvider.PROVIDER_ID,
-                // 필요시 다른 인증 제공자 추가
             ],
             callbacks: {
-                signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+                signInSuccessWithAuthResult: async function(authResult, redirectUrl) {
                     console.log("로그인 성공");
 
                     // 모달 닫기
@@ -119,18 +151,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // ID 토큰 가져오기
-                    authResult.user.getIdToken().then(async (idToken) => {
+                    try {
+                        const idToken = await authResult.user.getIdToken();
                         console.log("ID 토큰 획득 완료");
+                        
                         // 백엔드와 프로필 동기화
-                        await syncBackendProfile(idToken);
-                        // 성공 시 syncBackendProfile 내에서 페이지 새로고침 처리
-                    }).catch(error => {
-                        console.error("ID 토큰 가져오기 오류:", error);
-                        if (authErrorDiv) authErrorDiv.textContent = '로그인 완료 오류: ' + error.message;
-                        if (firebase && firebase.auth) {
+                        const syncSuccess = await syncBackendProfile(idToken);
+                        if (!syncSuccess) {
+                            console.error("백엔드 동기화 실패");
                             firebase.auth().signOut();
                         }
-                    });
+                    } catch (error) {
+                        console.error("ID 토큰 가져오기 오류:", error);
+                        if (authErrorDiv) authErrorDiv.textContent = '로그인 완료 오류: ' + error.message;
+                    }
+                    
                     return false; // 리디렉션 방지
                 },
                 signInFailure: function(error) {
@@ -155,55 +190,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 인증 상태 리스너
         if (firebase && firebase.auth) {
-            firebase.auth().onAuthStateChanged((user) => {
+            firebase.auth().onAuthStateChanged(async (user) => {
+                isInitializing = false;
+                
                 if (user) {
                     console.log("인증 상태 변경: 로그인됨", user.uid);
+                    
+                    // 모달 닫기 (열려있다면)
                     if (window.closeLoginModal) window.closeLoginModal();
                     
-                    // Get user information for UI update
-                    const userData = {
-                        name: user.displayName || '사용자',
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        uid: user.uid
-                    };
-                    
-                    // Update UI without page refresh
-                    updateAuthUI(true, userData);
+                    try {
+                        // Firebase 토큰 가져오기
+                        const idToken = await user.getIdToken();
+                        
+                        // 세션 상태 확인하고 필요시 동기화
+                        const sessionData = await checkServerSession();
+                        if (!sessionData) {
+                            console.log("세션이 없습니다. 백엔드 동기화 시도...");
+                            await syncBackendProfile(idToken);
+                        } else if (sessionData.uid !== user.uid) {
+                            console.log("세션 사용자 ID가 다릅니다. 백엔드 동기화 시도...");
+                            await syncBackendProfile(idToken);
+                        } else {
+                            console.log("세션이 이미 존재합니다:", sessionData);
+                        }
+                        
+                        // UI 업데이트
+                        updateAuthUI(true, {
+                            name: user.displayName || sessionData?.displayName || '사용자',
+                            email: user.email || sessionData?.email,
+                            photoURL: user.photoURL,
+                            uid: user.uid
+                        });
+                    } catch (error) {
+                        console.error("토큰 또는 세션 확인 오류:", error);
+                    }
                 } else {
                     console.log("인증 상태 변경: 로그아웃됨");
-                    // Update UI to show login button
+                    // UI 업데이트
                     updateAuthUI(false);
+                    
                     // 서버 세션 상태 확인 (백엔드 세션은 별도로 존재할 수 있음)
-                    checkServerSession();
+                    const sessionData = await checkServerSession();
+                    if (sessionData) {
+                        console.log("Firebase에서 로그아웃됐지만 서버 세션은 있습니다. 새로고침...");
+                        window.location.reload();
+                    }
                 }
             });
             
             // 토큰 갱신 리스너
             firebase.auth().onIdTokenChanged(async (user) => {
                 if (user) {
-                    // 토큰 갱신 시 백엔드에 알림
-                    const token = await user.getIdToken();
-                    // 필요시 백엔드에 토큰 갱신 요청
-                    console.log("ID 토큰이 갱신되었습니다");
+                    try {
+                        const token = await user.getIdToken();
+                        // 토큰 갱신 시 서버에 알림 (선택적)
+                        console.log("ID 토큰이 갱신되었습니다");
+                    } catch (error) {
+                        console.error("토큰 갱신 오류:", error);
+                    }
                 }
             });
         } else {
             console.error("인증 상태 리스너 설정을 위한 Firebase Auth를 사용할 수 없습니다.");
-        }
-
-        // 서버 세션 상태 확인 함수
-        async function checkServerSession() {
-            try {
-                const response = await fetch('/api/auth/status');
-                if (response.ok) {
-                    // 서버 세션이 있지만 Firebase 상태는 로그아웃 - 페이지 새로고침
-                    console.log("서버 세션은 있으나 Firebase 상태가 로그아웃됨 - 새로고침");
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error("서버 세션 확인 오류:", error);
-            }
+            isInitializing = false;
         }
 
         // 로그인 버튼 이벤트 리스너
@@ -216,7 +266,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     console.error("Firebase가 준비되지 않았거나 인증 컨테이너를 찾을 수 없어 UI를 시작할 수 없습니다.");
                     if (authErrorDiv) authErrorDiv.textContent = '로그인 서비스가 준비되지 않았습니다. 나중에 다시 시도해주세요.';
-                    if (!firebaseApp || !ui) {
+                    
+                    // 초기화 다시 시도
+                    if (!isInitializing && (!firebaseApp || !ui)) {
                         initializeApp();
                     }
                 }
@@ -237,7 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (firebase && firebase.auth) {
                 firebase.auth().signOut().then(() => {
                     console.log('Firebase에서 로그아웃 성공');
-                    window.location.href = '/logout'; // 서버 세션도 로그아웃
+                    // 서버 세션도 함께 로그아웃 처리
+                    window.location.href = '/logout';
                 }).catch((error) => {
                     console.error('로그아웃 오류', error);
                     alert('로그아웃 중 오류가 발생했습니다.');
@@ -260,38 +313,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginBtn = document.getElementById('login-btn');
         const userLoggedIn = document.querySelector('.user-logged-in');
         
-        if (!loginBtn || !userLoggedIn) {
+        if (!loginBtn && !userLoggedIn) {
             console.warn('Auth UI elements not found in DOM');
             return;
         }
-        
+
         if (isLoggedIn && userData) {
             // Hide login button, show user profile section
-            loginBtn.style.display = 'none';
-            userLoggedIn.style.display = 'flex';
-            
-            // Update avatar with first letter of user's name
-            const avatar = userLoggedIn.querySelector('.avatar');
-            if (avatar && userData.name) {
-                avatar.textContent = userData.name.substring(0, 1).toUpperCase();
-            }
-            
-            // Update profile link if needed
-            const profileLink = userLoggedIn.querySelector('.profile-link');
-            if (profileLink) {
-                profileLink.title = `${userData.name}님의 프로필`;
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (userLoggedIn) {
+                userLoggedIn.style.display = 'flex';
+                
+                // Update avatar with first letter of user's name
+                const avatar = userLoggedIn.querySelector('.avatar');
+                if (avatar && userData.name) {
+                    avatar.textContent = userData.name.substring(0, 1).toUpperCase();
+                }
+                
+                // Update profile link if needed
+                const profileLink = userLoggedIn.querySelector('.profile-link');
+                if (profileLink) {
+                    profileLink.title = `${userData.name}님의 프로필`;
+                }
             }
         } else {
             // Show login button, hide user profile section
-            loginBtn.style.display = 'block';
-            userLoggedIn.style.display = 'none';
+            if (loginBtn) loginBtn.style.display = 'block';
+            if (userLoggedIn) userLoggedIn.style.display = 'none';
         }
     }
 
-    // 초기화 시작 (로그인 버튼이나 로그아웃 버튼이 있을 때만)
-    if (loginButton || logoutBtn) {
-        initializeApp();
-    } else {
-        console.log("로그인 버튼이나 로그아웃 버튼을 찾을 수 없습니다. Firebase 인증 초기화 건너뜀.");
-    }
+    // 초기화 시작
+    initializeApp();
 });

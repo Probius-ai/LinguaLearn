@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.example.LinguaLearn.model.User;
+import com.example.LinguaLearn.security.FirebaseAuthenticationToken;
 import com.example.LinguaLearn.service.UserService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
@@ -24,7 +25,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@Component // Register as a Spring component
+@Component
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(FirebaseTokenFilter.class);
@@ -43,6 +44,8 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = (User) session.getAttribute("user");
                 logger.debug("Found authenticated user in session: {}", user.getUid());
+                
+                // 일반 Authentication 객체 사용 (FirebaseToken을 저장하지 않음)
                 UsernamePasswordAuthenticationToken authentication = 
                     new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -66,9 +69,9 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             String uid = decodedToken.getUid();
             logger.debug("Firebase token verified for UID: {}", uid);
 
-            // UsernamePasswordAuthenticationToken 생성
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    decodedToken, null, new ArrayList<>());
+            // 커스텀 Authentication 객체 생성 (FirebaseToken 직접 저장하지 않음)
+            FirebaseAuthenticationToken authentication = new FirebaseAuthenticationToken(
+                    uid, decodedToken.getEmail(), decodedToken.getName(), new ArrayList<>());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);

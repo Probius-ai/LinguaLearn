@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.LinguaLearn.model.User;
+import com.example.LinguaLearn.security.FirebaseAuthenticationToken;
 import com.example.LinguaLearn.service.UserService;
-import com.google.firebase.auth.FirebaseToken;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -32,17 +32,31 @@ public class UserController {
     @PostMapping("/sync") // Endpoint to sync user data after login
     public ResponseEntity<?> syncUserProfile(HttpSession httpSession) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof FirebaseToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated or invalid token principal");
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         }
 
-        FirebaseToken decodedToken = (FirebaseToken) authentication.getPrincipal();
-        String uid = decodedToken.getUid();
+        // FirebaseToken 대신 FirebaseAuthenticationToken 또는 User 객체 사용
+        String uid;
+        String email = null;
+        String name = null;
+        
+        if (authentication instanceof FirebaseAuthenticationToken) {
+            FirebaseAuthenticationToken firebaseAuth = (FirebaseAuthenticationToken) authentication;
+            uid = firebaseAuth.getUid();
+            email = firebaseAuth.getEmail();
+            name = firebaseAuth.getName();
+        } else {
+            uid = authentication.getName(); // 기본 인증에서는 getName()이 uid를 반환
+        }
+        
         logger.info("Syncing user profile for UID: {}", uid);
 
         try {
-            User user = userService.createOrUpdateUser(decodedToken);
-            // Store user in session
+            // 필요한 사용자 데이터로 사용자 생성 또는 업데이트
+            User user = userService.createOrUpdateUser(uid, email, name);
+            
+            // 세션에 사용자 저장
             httpSession.setAttribute("user", user);
             logger.info("User profile synced and stored in session: {}", user);
             return ResponseEntity.ok(user);
@@ -59,10 +73,10 @@ public class UserController {
         if (user == null) {
             // 세션에 사용자가 없으면 SecurityContext에서 확인
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.getPrincipal() instanceof FirebaseToken) {
-                FirebaseToken token = (FirebaseToken) authentication.getPrincipal();
+            if (authentication != null) {
+                String uid = authentication.getName();
                 try {
-                    user = userService.getUser(token.getUid());
+                    user = userService.getUser(uid);
                     if (user != null) {
                         // 세션에 사용자 정보 저장
                         httpSession.setAttribute("user", user);

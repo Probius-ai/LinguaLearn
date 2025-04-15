@@ -1,0 +1,61 @@
+/* 세션 타임아웃 모달 스타일 */
+#session-timeout-warning {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background-color: var(--bg-secondary);
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    z-index: 2000; /* 일반 모달보다 높은 z-index */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+#session-timeout-warning.active {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    visibility: visible;
+}
+
+#session-timeout-warning .modal-content {
+    padding: 2rem;
+    position: relative;
+}
+
+#session-timeout-warning .modal-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+#session-timeout-warning .modal-header h2 {
+    font-size: 1.8rem;
+    color: var(--error);
+    margin: 0;
+}
+
+#session-timeout-warning .modal-body p {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+#session-timeout-warning .form-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* 카운트다운 스타일 */
+.countdown {
+    font-weight: bold;
+    color: var(--error);
+}
+
+/* 모달이 열릴 때 배경 오버레이 스타일 */
+#modal-overlay.timeout-overlay {
+    background-color: rgba(0, 0, 0, 0.7); /* 일반 모달보다 어두운 배경 */
+}

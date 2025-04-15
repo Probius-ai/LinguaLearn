@@ -25,13 +25,23 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-security' // Add this line
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	
+	// Spring Session 의존성 추가
+	implementation 'org.springframework.session:spring-session-core'
+	implementation 'org.springframework.session:spring-session-jdbc' // JDBC 기반 세션 저장소
+	
+	// H2 데이터베이스 (세션 저장용)
+	runtimeOnly 'com.h2database:h2' 
+	
 	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-	implementation 'com.google.firebase:firebase-admin:9.3.0' // Firebase Admin SDK 최신 버전으로 업데이트
+	implementation 'com.google.firebase:firebase-admin:9.3.0' // Firebase Admin SDK
+	
 	compileOnly 'org.projectlombok:lombok'
 	implementation 'javax.servlet:javax.servlet-api:4.0.1'
 	annotationProcessor 'org.projectlombok:lombok'

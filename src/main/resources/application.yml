@@ -1,9 +1,43 @@
 spring:
   application:
-    name: LinguaLearn # From application.properties
+    name: LinguaLearn
+  # H2 데이터베이스 설정
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  # H2 콘솔 활성화 (개발 환경에서만 사용)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  # Spring Session 설정
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: always
+      schema: classpath:schema.sql  # 명시적으로 스키마 파일 지정
+      table-name: SPRING_SESSION
+      cleanup-cron: "0 */30 * * * *"  # 30분마다 만료된 세션 정리
+    timeout: 1800  # 세션 타임아웃 (30분)
+  # SQL 초기화 설정
+  sql:
+    init:
+      mode: embedded  # 내장 DB만 초기화
+      
+# 세션 동시성 처리 설정
+server:
+  servlet:
+    session:
+      tracking-modes: cookie
+      cookie:
+        http-only: true
+      
+# Firebase 설정
 firebase:
   project:
-    id: llm-lingualearn # 기존 firebase.project.id
+    id: llm-lingualearn
   service:
     account:
-      path: llm-lingualearn-firebase-adminsdk-fbsvc-730ed32982.json # 기존 firebase.service.account.path
+      path: llm-lingualearn-firebase-adminsdk-fbsvc-730ed32982.json
