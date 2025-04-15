@@ -60,7 +60,8 @@ public class ImageQuizController {
                 }
             }
             
-            List<String> wordList = wordService.getWordsByLevelAndLanguage(level, language);
+            // 새로운 방식으로 단어 가져오기
+            List<String> wordList = wordService.getWordsForQuiz(language, level);
             
             if (wordList.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "단어가 없습니다."));
