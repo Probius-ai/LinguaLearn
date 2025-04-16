@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오답 노트 - LinguaLearn</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script th:src="@{/js/theme-switcher.js}" defer></script>
+
+  <style>
+    .wrong-note-container {
+      max-width: 800px;
+      margin: 2rem auto 4rem;
+    }
+
+    .wrong-note-card {
+      background-color: var(--card-bg);
+      border-radius: 15px;
+      padding: 2.5rem;
+      box-shadow: 0 10px 25px var(--shadow);
+      margin-bottom: 3rem;
+    }
+
+    .wrong-note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .wrong-note-list {
+      margin-top: 2rem;
+    }
+
+    .wrong-item {
+      background-color: var(--bg-secondary);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .wrong-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px var(--shadow);
+    }
+
+    .sentence-text {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .retry-btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+      margin-left: 1rem;
+    }
+
+    .retry-btn:hover {
+      background-color: var(--accent-hover);
+      transform: scale(1.05);
+    }
+
+    .no-wrong-message {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+      background-color: var(--bg-secondary);
+      border-radius: 10px;
+      font-style: italic;
+    }
+
+    .error-message {
+      text-align: center;
+      padding: 2rem;
+      color: var(--error);
+      background-color: rgba(220, 53, 69, 0.1);
+      border-radius: 10px;
+      margin: 2rem 0;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .primary-btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+    }
+
+    .primary-btn:hover {
+      background-color: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+
+    .secondary-btn {
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .secondary-btn:hover {
+      background-color: var(--bg-color);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .wrong-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .retry-btn {
+        margin-left: 0;
+        margin-top: 1rem;
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- 헤더 영역 -->
+<header class="header">
+  <div class="container header-container">
+    <div class="logo">
+      <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+    </div>
+    <nav class="main-nav">
+      <ul>
+        <li><a th:href="@{/}">홈</a></li>
+        <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+        <li><a th:href="@{/ai/translate}">번역 도구</a></li>
+        <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
+        <li><a th:href="@{/ai/sentence-test}">문장 테스트</a></li>
+        <li><a th:href="@{/wrong-sentences}">오답 노트</a></li>
+      </ul>
+    </nav>
+    <div class="user-actions">
+      <div class="theme-switcher">
+        <button id="theme-toggle" aria-label="테마 변경">
+          <i class="fas fa-sun light-icon"></i>
+          <i class="fas fa-moon dark-icon"></i>
+        </button>
+        <div class="theme-dropdown">
+          <button data-theme="light">Light</button>
+          <button data-theme="dark">Dark</button>
+          <button data-theme="blue">Blue</button>
+          <button data-theme="green">Green</button>
+        </div>
+      </div>
+
+      <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+      <div th:if="${isLoggedIn}" class="user-logged-in">
+        <a th:href="@{/profile}" class="profile-link" title="프로필 보기">
+          <div class="avatar" th:text="${#strings.substring(user.displayName, 0, 1)}">U</div>
+        </a>
+        <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 메인 컨텐츠 -->
+<main>
+  <div class="container wrong-note-container">
+    <h1 class="section-title">오답 노트</h1>
+
+    <!-- 오류 메시지 (필요 시 표시) -->
+    <div th:if="${error}" class="error-message" th:text="${error}">
+      오류 메시지
+    </div>
+
+    <div class="wrong-note-card">
+      <div class="wrong-note-header">
+        <h2>틀린 문장 목록</h2>
+        <a th:href="@{/ai/analyze-progress}" class="retry-btn">
+          <i class="fas fa-chart-line"></i> 학습 분석
+        </a>
+      </div>
+
+      <p>지금까지 틀린 번역 문장 목록입니다. '다시 풀기' 버튼을 클릭하여 해당 문장을 다시 번역해볼 수 있습니다.</p>
+
+      <div class="wrong-note-list">
+        <!-- 오답 목록 -->
+        <div th:each="wrongSentence : ${wrongSentences}" class="wrong-item">
+          <div class="sentence-text" th:text="${wrongSentence}">
+            I went to the store to buy some groceries yesterday.
+          </div>
+          <a th:href="@{/wrong-sentences/retry(originalSentence=${wrongSentence})}" class="retry-btn">
+            <i class="fas fa-redo"></i> 다시 풀기
+          </a>
+        </div>
+
+        <!-- 오답이 없는 경우 -->
+        <div th:if="${#lists.isEmpty(wrongSentences)}" class="no-wrong-message">
+          <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+          <h3>현재 오답 노트에 저장된 문장이 없습니다.</h3>
+          <p>문장 테스트를 통해 번역 실력을 향상시켜보세요!</p>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <a th:href="@{/ai/sentence-test}" class="action-btn primary-btn">
+          <i class="fas fa-language"></i> 문장 테스트 시작하기
+        </a>
+        <a th:href="@{/profile}" class="action-btn secondary-btn">
+          <i class="fas fa-user"></i> 프로필로 돌아가기
+        </a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 푸터 -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+        <p>언어를 배우는 새로운 방법</p>
+      </div>
+      <div class="footer-links">
+        <div class="link-group">
+          <h3>기능</h3>
+          <ul>
+            <li><a th:href="@{/quiz/image}">그림 단어 퀴즈</a></li>
+            <li><a th:href="@{/ai/translate}">문장 번역</a></li>
+            <li><a th:href="@{/ai/daily-word}">일일 추천 단어</a></li>
+          </ul>
+        </div>
+        <div class="link-group">
+          <h3>회사</h3>
+          <ul>
+            <li><a href="#">소개</a></li>
+            <li><a href="#">연락처</a></li>
+            <li><a href="#">자주 묻는 질문</a></li>
+          </ul>
+        </div>
+        <div class="link-group">
+          <h3>법적 정보</h3>
+          <ul>
+            <li><a href="#">이용약관</a></li>
+            <li><a href="#">개인정보처리방침</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+      <div class="social-links">
+        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- 스크립트 -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script th:src="@{/js/firebase-auth-main.js}" defer></script>
+<script th:src="@{/js/wrong-sentences.js}" defer></script>
+</body>
+</html>
