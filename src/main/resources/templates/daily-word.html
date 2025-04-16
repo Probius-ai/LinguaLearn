@@ -397,7 +397,7 @@
             </div>
             
             <!-- 로그인한 사용자만 볼 수 있는 아카이브 -->
-            <div th:if="${isLoggedIn && !error}" class="word-archive">
+            <div th:if="${isLoggedIn && (error == null || #strings.isEmpty(error))}" class="word-archive">
                 <div class="archive-header">
                     <h2>지난 단어 모음</h2>
                     <div class="archive-filters">

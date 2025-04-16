@@ -405,7 +405,8 @@
             </div>
             
             <!-- 분석 결과 -->
-            <div th:if="${!noData && !error}" class="progress-card">
+            <!-- 수정된 코드 -->
+            <div th:if="${noData != null && noData == false && error == null}" class="progress-card">
                 <div class="stats-overview">
                     <div class="stat-card">
                         <div class="stat-icon">
