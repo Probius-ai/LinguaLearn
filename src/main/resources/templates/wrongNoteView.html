@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오답 노트</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+  <link rel="stylesheet" th:href="@{/css/profile.css}">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script th:src="@{/js/theme-switcher.js}" defer></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 8px; margin-bottom: 4px; background-color: #f0f0f0; border-radius: 4px; }
+    .no-wrong { font-style: italic; color: #777; }
+    a { text-decoration: none; color: #007bff; }
+  </style>
+</head>
+<header class="header">
+  <div class="container header-container">
+    <div class="logo">
+      <h1><a th:href="@{/}"><i class="fas fa-language"></i>LinguaLearn</a></h1>
+    </div>
+    <nav class="main-nav">
+      <ul>
+        <li><a th:href="@{/}">홈</a></li>
+        <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+        <li><a th:href="@{/translate}">번역 도구</a></li>
+        <li><a th:href="@{/words}">추천 단어</a></li>
+      </ul>
+    </nav>
+    <div class="user-actions">
+      <div class="theme-switcher">
+        <button id="theme-toggle" aria-label="테마 변경">
+          <i class="fas fa-sun light-icon"></i>
+          <i class="fas fa-moon dark-icon"></i>
+        </button>
+        <div class="theme-dropdown">
+          <button data-theme="light">Light</button>
+          <button data-theme="dark">Dark</button>
+          <button data-theme="blue">Blue</button>
+          <button data-theme="green">Green</button>
+        </div>
+      </div>
+      <div class="profile-dropdown">
+        <div class="avatar" th:text="${#strings.substring(user.displayName, 0, 1)}">U</div>
+        <div class="dropdown-menu">
+          <a th:href="@{/profile}" class="active">프로필</a>
+          <a th:href="@{/settings}">설정</a>
+          <a th:href="@{/logout}">로그아웃</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+<body>
+<h1>오답 노트</h1>
+<div>
+  <p>아래는 지금까지 틀린 번역 문장 목록입니다.</p>
+  <!-- wrongSentences 리스트에 값이 있을 경우 반복 출력 -->
+  <ul>
+    <li th:each="wrongSentence : ${wrongSentences}">
+      <span th:text="${wrongSentence}">오답 문장</span>
+      <!-- 다시 풀기 버튼 추가: 필요 시 원문 정보도 같이 전달 -->
+      <a th:href="@{/retryWrongSentenceForm(originalSentence=${wrongSentence}, wrongSentence=${wrongSentence})}">
+        다시 풀기
+      </a>
+    </li>
+  </ul>
+  <!-- wrongSentences 리스트가 비어있으면 '오답이 없습니다.' 메시지 출력 -->
+  <p th:if="${#lists.isEmpty(wrongSentences)}" class="no-wrong">현재 오답 노트에 저장된 문장이 없습니다.</p>
+</div>
+<div>
+  <a href="/">홈으로 이동</a>
+</div>
+</body>
+</html>
