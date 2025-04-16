@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>번역 도구 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+    
+    <style>
+        .translate-container {
+            max-width: 900px;
+            margin: 2rem auto 4rem;
+        }
+        
+        .translate-box {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 20px var(--shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .translate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .language-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .language-selector select {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+        
+        .swap-languages {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--accent);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .swap-languages:hover {
+            transform: rotate(180deg);
+            color: var(--accent-hover);
+        }
+        
+        .translate-areas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .translate-area {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .translate-area label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .translate-area textarea {
+            height: 200px;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            resize: none;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .translate-area textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
+        }
+        
+        .translate-area textarea:disabled {
+            background-color: var(--gray-100);
+            color: var(--text-secondary);
+        }
+        
+        .translate-options {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+        
+        .translate-options button {
+            margin: 0 0.5rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            margin: 1rem auto;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--gray-200);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .translate-history {
+            margin-top: 3rem;
+        }
+        
+        .history-entry {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .history-languages {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .history-text {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .history-column {
+            padding: 0.8rem;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .translate-areas {
+                grid-template-columns: 1fr;
+            }
+            
+            .translate-area textarea {
+                height: 150px;
+            }
+            
+            .history-text {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">홈</a></li>
+                    <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                    <li><a th:href="@{/translate}" class="active">번역 도구</a></li>
+                    <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                
+                <!-- 로그인 버튼 (세션에 사용자가 없을 때만 표시) -->
+                <button th:if="${!isLoggedIn}" class="btn login-btn" id="login-btn">로그인</button>
+
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div th:if="${isLoggedIn}" class="user-logged-in">
+                    <a th:href="@{/profile}" class="profile-link" title="프로필 보기">
+                        <div class="avatar" th:text="${#strings.substring(session.user.displayName, 0, 1)}">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main>
+        <div class="container translate-container">
+            <h1 class="section-title">AI 번역 도구</h1>
+            
+            <div class="translate-box">
+                <div class="translate-header">
+                    <div class="language-selector">
+                        <select id="from-language">
+                            <option value="english">영어</option>
+                            <option value="korean">한국어</option>
+                            <option value="japanese">일본어</option>
+                            <option value="chinese">중국어</option>
+                            <option value="spanish">스페인어</option>
+                            <option value="french">프랑스어</option>
+                        </select>
+                        
+                        <button class="swap-languages" id="swap-languages">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                        
+                        <select id="to-language">
+                            <option value="korean">한국어</option>
+                            <option value="english">영어</option>
+                            <option value="japanese">일본어</option>
+                            <option value="chinese">중국어</option>
+                            <option value="spanish">스페인어</option>
+                            <option value="french">프랑스어</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="translate-areas">
+                    <div class="translate-area">
+                        <label for="source-text">원문</label>
+                        <textarea id="source-text" placeholder="번역할 텍스트를 입력하세요..."></textarea>
+                    </div>
+                    
+                    <div class="translate-area">
+                        <label for="translated-text">번역</label>
+                        <textarea id="translated-text" placeholder="번역 결과가 여기에 표시됩니다..." readonly></textarea>
+                    </div>
+                </div>
+                
+                <div id="loading-spinner" class="loading-spinner"></div>
+                
+                <div class="translate-options">
+                    <button id="translate-btn" class="btn btn-primary">
+                        <i class="fas fa-language"></i> 번역하기
+                    </button>
+                    <button id="copy-btn" class="btn btn-secondary">
+                        <i class="fas fa-copy"></i> 복사하기
+                    </button>
+                    <button id="clear-btn" class="btn btn-secondary">
+                        <i class="fas fa-eraser"></i> 지우기
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 로그인된 사용자만 볼 수 있는 번역 기록 -->
+            <div th:if="${isLoggedIn}" class="translate-history">
+                <h2>최근 번역 기록</h2>
+                <div id="history-container">
+                    <!-- 번역 기록은 자바스크립트로 동적 추가 -->
+                    <p id="no-history" class="text-center">번역 기록이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a th:href="@{/quiz/image}">그림 단어 퀴즈</a></li>
+                            <li><a th:href="@{/ai/translate}">문장 번역</a></li>
+                            <li><a th:href="@{/ai/daily-word}">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 로그인 모달 -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <h2>로그인 또는 회원가입</h2>
+            </div>
+            <div class="modal-body">
+                <div id="firebaseui-auth-container"></div>
+                <div id="auth-error" style="color: var(--error); margin-top: 15px; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- 스크립트 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <script th:src="@{/js/login-modal.js}" defer></script>
+    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM 요소
+            const fromLanguage = document.getElementById('from-language');
+            const toLanguage = document.getElementById('to-language');
+            const swapButton = document.getElementById('swap-languages');
+            const sourceText = document.getElementById('source-text');
+            const translatedText = document.getElementById('translated-text');
+            const translateButton = document.getElementById('translate-btn');
+            const copyButton = document.getElementById('copy-btn');
+            const clearButton = document.getElementById('clear-btn');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            
+            // 언어 스왑 버튼
+            swapButton.addEventListener('click', function() {
+                const fromValue = fromLanguage.value;
+                const toValue = toLanguage.value;
+                
+                fromLanguage.value = toValue;
+                toLanguage.value = fromValue;
+                
+                // 이미 번역된 내용이 있으면 원문과 번역 스왑
+                if (translatedText.value) {
+                    const sourceValue = sourceText.value;
+                    sourceText.value = translatedText.value;
+                    translatedText.value = sourceValue;
+                }
+            });
+            
+            // 번역 버튼
+            translateButton.addEventListener('click', function() {
+                if (!sourceText.value.trim()) {
+                    alert('번역할 텍스트를 입력해주세요.');
+                    return;
+                }
+                
+                // 로딩 스피너 표시
+                loadingSpinner.style.display = 'block';
+                translateButton.disabled = true;
+                
+                // API 호출
+                fetch('/ai/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'text': sourceText.value,
+                        'fromLanguage': fromLanguage.value,
+                        'toLanguage': toLanguage.value
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Translation request failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 번역 결과 표시
+                    translatedText.value = data.translation;
+                    
+                    // 번역 기록 저장 (로컬 스토리지)
+                    saveTranslationHistory(sourceText.value, data.translation, 
+                                          fromLanguage.value, toLanguage.value);
+                    
+                    // 번역 기록 표시 업데이트
+                    updateTranslationHistory();
+                })
+                .catch(error => {
+                    console.error('Translation error:', error);
+                    alert('번역 중 오류가 발생했습니다. 다시 시도해주세요.');
+                })
+                .finally(() => {
+                    // 로딩 스피너 숨기기
+                    loadingSpinner.style.display = 'none';
+                    translateButton.disabled = false;
+                });
+            });
+            
+            // 복사 버튼
+            copyButton.addEventListener('click', function() {
+                if (!translatedText.value.trim()) {
+                    alert('복사할 번역 결과가 없습니다.');
+                    return;
+                }
+                
+                // 텍스트 복사
+                translatedText.select();
+                document.execCommand('copy');
+                
+                // 복사 완료 메시지
+                const originalText = copyButton.innerHTML;
+                copyButton.innerHTML = '<i class="fas fa-check"></i> 복사됨';
+                
+                // 3초 후 원래 버튼 텍스트로 복원
+                setTimeout(() => {
+                    copyButton.innerHTML = originalText;
+                }, 3000);
+            });
+            
+            // 지우기 버튼
+            clearButton.addEventListener('click', function() {
+                sourceText.value = '';
+                translatedText.value = '';
+                sourceText.focus();
+            });
+            
+            // 번역 기록 저장 (로컬 스토리지)
+            function saveTranslationHistory(source, translation, fromLang, toLang) {
+                let history = JSON.parse(localStorage.getItem('translationHistory')) || [];
+                
+                // 최대 10개까지만 저장
+                if (history.length >= 10) {
+                    history.pop(); // 가장 오래된 항목 제거
+                }
+                
+                // 새 항목 추가
+                history.unshift({
+                    source: source,
+                    translation: translation,
+                    fromLanguage: fromLang,
+                    toLanguage: toLang,
+                    timestamp: new Date().toISOString()
+                });
+                
+                localStorage.setItem('translationHistory', JSON.stringify(history));
+            }
+            
+            // 번역 기록 표시 업데이트
+            function updateTranslationHistory() {
+                const historyContainer = document.getElementById('history-container');
+                const noHistory = document.getElementById('no-history');
+                
+                if (!historyContainer) return;
+                
+                // 기록 가져오기
+                const history = JSON.parse(localStorage.getItem('translationHistory')) || [];
+                
+                // 기록이 없으면 메시지 표시
+                if (history.length === 0) {
+                    noHistory.style.display = 'block';
+                    return;
+                }
+                
+                // 메시지 숨기기
+                noHistory.style.display = 'none';
+                
+                // 기존 내용 지우기 (no-history 제외)
+                const existingEntries = historyContainer.querySelectorAll('.history-entry');
+                existingEntries.forEach(entry => entry.remove());
+                
+                // 기록 표시
+                history.forEach(entry => {
+                    // 언어 이름 변환
+                    const fromLangName = getLanguageName(entry.fromLanguage);
+                    const toLangName = getLanguageName(entry.toLanguage);
+                    
+                    // 날짜 포맷
+                    const date = new Date(entry.timestamp);
+                    const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                    
+                    // 항목 생성
+                    const historyEntry = document.createElement('div');
+                    historyEntry.className = 'history-entry';
+                    historyEntry.innerHTML = `
+                        <div class="history-languages">
+                            <span>${fromLangName} &rarr; ${toLangName}</span>
+                            <span>${formattedDate}</span>
+                        </div>
+                        <div class="history-text">
+                            <div class="history-column">${entry.source}</div>
+                            <div class="history-column">${entry.translation}</div>
+                        </div>
+                    `;
+                    
+                    // 클릭하면 번역 필드에 채우기
+                    historyEntry.addEventListener('click', function() {
+                        sourceText.value = entry.source;
+                        translatedText.value = entry.translation;
+                        fromLanguage.value = entry.fromLanguage;
+                        toLanguage.value = entry.toLanguage;
+                    });
+                    
+                    // 컨테이너에 추가
+                    historyContainer.appendChild(historyEntry);
+                });
+            }
+            
+            // 언어 코드를 이름으로 변환
+            function getLanguageName(code) {
+                const languageNames = {
+                    'english': '영어',
+                    'korean': '한국어',
+                    'japanese': '일본어',
+                    'chinese': '중국어',
+                    'spanish': '스페인어',
+                    'french': '프랑스어'
+                };
+                
+                return languageNames[code] || code;
+            }
+            
+            // 페이지 로드 시 번역 기록 표시
+            updateTranslationHistory();
+        });
+    </script>
+</body>
+</html>
