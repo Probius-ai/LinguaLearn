@@ -24,10 +24,13 @@ public class ProfileController {
 
     @GetMapping
     public String showProfile(Model model, HttpSession session) {
+        logger.info("start profile");
         User user = (User) session.getAttribute("user");
         if (user == null) {
             return "redirect:/login?redirect=/profile";
         }
+        logger.info("Fetching user profile for UID: {}", user.getUid());
+        logger.info("Fetching user profile for name: {}", user.getDisplayName());
 
         model.addAttribute("user", user);
         return "profile-page";
@@ -35,18 +38,19 @@ public class ProfileController {
 
     @PostMapping("/settings")
     public String updateSettings(
-            @ModelAttribute User updatedUser,
-            HttpSession session) {
-
+            @ModelAttribute User updatedUser, HttpSession session) {
+        logger.info("start settings");
+        logger.info("updated user: {}", updatedUser.getDisplayName());
         User user = (User) session.getAttribute("user");
         if (user == null) {
             return "redirect:/login?redirect=/profile";
         }
+        logger.info("Updating user profile for UID: {}", user.getUid());
 
         try {
             // Update user settings
             User updated = userService.updateUserSettings(user.getUid(), updatedUser);
-
+            logger.info("Updating user profile for Name: {}", updated.getDisplayName());
             // Update session
             session.setAttribute("user", updated);
 
