@@ -55,7 +55,9 @@ public class UserController {
     
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile(HttpSession httpSession) {
+        logger.info("start profile");
         User user = (User) httpSession.getAttribute("user");
+        logger.info("Fetching user profile for UID: {}", user.getUid());
         if (user == null) {
             // 세션에 사용자가 없으면 SecurityContext에서 확인
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
