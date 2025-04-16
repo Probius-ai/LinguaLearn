@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학습 분석 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+    
+    <style>
+        .progress-container {
+            max-width: 900px;
+            margin: 2rem auto 4rem;
+        }
+        
+        .progress-card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 25px var(--shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .stat-card {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem auto;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        .progress-circle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        .progress-circle {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+        
+        .progress-circle svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        
+        .progress-circle-bg {
+            fill: none;
+            stroke: var(--gray-200);
+            stroke-width: 15;
+        }
+        
+        .progress-circle-value {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 15;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+        
+        .progress-circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .progress-circle-percentage {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0;
+        }
+        
+        .progress-circle-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .analysis-section {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            border-left: 5px solid var(--accent);
+        }
+        
+        .analysis-section h2 {
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .analysis-section p {
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .sentences-section {
+            margin-top: 2.5rem;
+        }
+        
+        .sentences-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sentence-tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+        
+        .sentence-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        
+        .sentence-panel {
+            display: none;
+        }
+        
+        .sentence-panel.active {
+            display: block;
+        }
+        
+        .sentence-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .sentence-item {
+            background-color: var(--bg-color);
+            border-radius: 10px;
+            padding: 1.2rem;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+        
+        .sentence-item:hover {
+            box-shadow: 0 5px 15px var(--shadow);
+            border-color: var(--accent);
+        }
+        
+        .sentence-item-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .sentence-item-translation {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-style: italic;
+        }
+        
+        .sentence-item-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .no-data-message {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--error);
+            background-color: rgba(220, 53, 69, 0.1);
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .action-button {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .primary-button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+        }
+        
+        .primary-button:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+        
+        .secondary-button {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .secondary-button:hover {
+            background-color: var(--bg-color);
+            transform: translateY(-2px);
+        }
+        
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--accent);
+            opacity: 0.7;
+            animation: confetti-fall 5s linear infinite;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-overview {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .progress-circle {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .progress-circle-percentage {
+                font-size: 2rem;
+            }
+            
+            .sentences-tabs {
+                flex-direction: column;
+                gap: 0.5rem;
+                border-bottom: none;
+            }
+            
+            .sentence-tab {
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                text-align: center;
+            }
+            
+            .sentence-tab.active {
+                border-color: var(--accent);
+                background-color: rgba(67, 97, 238, 0.1);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">홈</a></li>
+                    <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                    <li><a th:href="@{/ai/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
+                    <li><a th:href="@{/ai/sentence-test}">문장 테스트</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div class="user-logged-in">
+                    <a th:href="@{/profile}" class="profile-link" title="프로필 보기">
+                        <div class="avatar" th:text="${#strings.substring(session.user.displayName, 0, 1)}">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main>
+        <div class="container progress-container">
+            <h1 class="section-title">AI 학습 분석</h1>
+            
+            <!-- 데이터가 없을 때 메시지 -->
+            <div th:if="${noData}" class="no-data-message">
+                <i class="fas fa-info-circle" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+                <h2>분석할 데이터가 없습니다</h2>
+                <p>문장 테스트를 통해 번역을 연습하면 여기에서 학습 분석 결과를 볼 수 있습니다.</p>
+                <div class="action-buttons">
+                    <a th:href="@{/ai/sentence-test}" class="action-button primary-button">
+                        <i class="fas fa-language"></i> 문장 테스트 시작하기
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 오류 메시지 (필요 시 표시) -->
+            <div th:if="${error}" class="error-message" th:text="${error}">
+                오류 메시지
+            </div>
+            
+            <!-- 분석 결과 -->
+            <div th:if="${!noData && !error}" class="progress-card">
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="stat-value" th:text="${totalCount}">12</div>
+                        <div class="stat-label">총 시도 횟수</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--success); background-color: rgba(40, 167, 69, 0.1);">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="stat-value" th:text="${correctCount}">8</div>
+                        <div class="stat-label">정답 수</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--error); background-color: rgba(220, 53, 69, 0.1);">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="stat-value" th:text="${totalCount - correctCount}">4</div>
+                        <div class="stat-label">오답 수</div>
+                    </div>
+                </div>
+                
+                <div class="progress-circle-container">
+                    <div class="progress-circle">
+                        <svg viewBox="0 0 160 160">
+                            <circle class="progress-circle-bg" cx="80" cy="80" r="70"></circle>
+                            <circle class="progress-circle-value" cx="80" cy="80" r="70" th:style="'stroke-dashoffset:' + (440 - ((${correctPercentage} * 440) / 100)) + 'px;'"></circle>
+                        </svg>
+                        <div class="progress-circle-text">
+                            <div class="progress-circle-percentage" th:text="${correctPercentage} + '%'">75%</div>
+                            <div class="progress-circle-label">정확도</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-section">
+                    <h2><i class="fas fa-robot"></i> AI 분석 결과</h2>
+                    <div th:if="${analysis}" th:utext="${#strings.replace(analysis, '\\n', '<br>')}">
+                        분석 결과가 여기에 표시됩니다. 학습 패턴, 정답/오답 경향, 개선 방안 등을 AI가 제공합니다.
+                    </div>
+                </div>
+                
+                <div class="sentences-section">
+                    <div class="sentences-tabs">
+                        <div class="sentence-tab active" data-panel="correct-panel">정답 문장</div>
+                        <div class="sentence-tab" data-panel="incorrect-panel">오답 문장</div>
+                    </div>
+                    
+                    <div class="sentence-panel active" id="correct-panel">
+                        <div th:if="${correctSentences != null && !correctSentences.empty}" class="sentence-list">
+                            <div class="sentence-item" th:each="sentence : ${correctSentences}">
+                                <div class="sentence-item-text" th:text="${sentence.sentence}">
+                                    The weather is nice today.
+                                </div>
+                                <div class="sentence-item-translation" th:text="${sentence.translation}">
+                                    오늘 날씨가 좋습니다.
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${correctSentences == null || correctSentences.empty}" class="no-data-message">
+                            정답으로 맞춘 문장이 없습니다.
+                        </div>
+                    </div>
+                    
+                    <div class="sentence-panel" id="incorrect-panel">
+                        <div th:if="${wrongSentences != null && !wrongSentences.empty}" class="sentence-list">
+                            <div class="sentence-item" th:each="sentence : ${wrongSentences}">
+                                <div class="sentence-item-text" th:text="${sentence.sentence}">
+                                    He goes to school by bus.
+                                </div>
+                                <div class="sentence-item-translation" th:text="${sentence.translation}">
+                                    그는 버스를 타고 학교에 갔다.
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${wrongSentences == null || wrongSentences.empty}" class="no-data-message">
+                            틀린 문장이 없습니다. 잘하고 계시네요!
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a th:href="@{/ai/sentence-test}" class="action-button primary-button">
+                        <i class="fas fa-redo"></i> 다시 테스트하기
+                    </a>
+                    <a th:href="@{/profile}" class="action-button secondary-button">
+                        <i class="fas fa-user"></i> 프로필로 돌아가기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a th:href="@{/quiz/image}">그림 단어 퀴즈</a></li>
+                            <li><a th:href="@{/ai/translate}">문장 번역</a></li>
+                            <li><a th:href="@{/ai/daily-word}">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 스크립트 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 탭 전환 처리
+            const tabs = document.querySelectorAll('.sentence-tab');
+            const panels = document.querySelectorAll('.sentence-panel');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 활성 탭 변경
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 패널 전환
+                    const panelId = this.getAttribute('data-panel');
+                    panels.forEach(panel => {
+                        panel.classList.remove('active');
+                        if (panel.id === panelId) {
+                            panel.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // 정확도가 높으면 축하 효과 (80% 이상)
+            const accuracy = parseInt(document.querySelector('.progress-circle-percentage')?.textContent || '0');
+            if (accuracy >= 80) {
+                createConfetti();
+            }
+            
+            // 색종이 효과 생성
+            function createConfetti() {
+                const confettiContainer = document.createElement('div');
+                confettiContainer.className = 'confetti-container';
+                document.body.appendChild(confettiContainer);
+                
+                const colors = ['#4361ee', '#3a0ca3', '#f72585', '#4cc9f0', '#4caf50', '#ff9800'];
+                
+                // 100개의 색종이 생성
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    
+                    // 랜덤 속성 설정
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const size = Math.random() * 10 + 5; // 5px ~ 15px
+                    const left = Math.random() * 100; // 0% ~ 100%
+                    const delay = Math.random() * 5; // 0s ~ 5s
+                    const rotation = Math.random() * 360; // 0deg ~ 360deg
+                    
+                    confetti.style.backgroundColor = color;
+                    confetti.style.width = `${size}px`;
+                    confetti.style.height = `${size}px`;
+                    confetti.style.left = `${left}%`;
+                    confetti.style.animationDelay = `${delay}s`;
+                    confetti.style.transform = `rotate(${rotation}deg)`;
+                    
+                    confettiContainer.appendChild(confetti);
+                }
+                
+                // 10초 후 제거
+                setTimeout(() => {
+                    confettiContainer.remove();
+                }, 10000);
+            }
+        });
+    </script>
+</body>
+</html>
