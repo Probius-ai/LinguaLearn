@@ -29,10 +29,12 @@
             </div>
             <nav class="main-nav">
                 <ul>
-                    <li><a th:href="@{/}" class="active">홈</a></li>
+                    <li><a th:href="@{/}">홈</a></li>
                     <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
-                    <li><a th:href="@{/translate}">번역 도구</a></li>
-                    <li><a th:href="@{/words}">추천 단어</a></li>
+                    <li><a th:href="@{/ai/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
+                    <li><a th:href="@{/ai/sentence-test}">문장 테스트</a></li>
+                    <li><a th:href="@{/wrong-sentences}">오답 노트</a></li>
                 </ul>
             </nav>
             <div class="user-actions">
@@ -98,7 +100,7 @@
                     </div>
                     <h3>문장 번역</h3>
                     <p>정확한 번역으로 언어 이해도를 높이세요.</p>
-                    <a href="#" class="feature-link">바로가기 <i class="fas fa-arrow-right"></i></a>
+                    <a th:href="@{/ai/translate}" class="feature-link">바로가기 <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
@@ -106,7 +108,7 @@
                     </div>
                     <h3>일일 추천 단어</h3>
                     <p>매일 새로운 단어로 어휘력을 향상시키세요.</p>
-                    <a href="#" class="feature-link">바로가기 <i class="fas fa-arrow-right"></i></a>
+                    <a th:href="@{/ai/daily-word}" class="feature-link">바로가기 <i class="fas fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
