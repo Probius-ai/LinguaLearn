@@ -25,6 +25,7 @@ public class WrongProblemController {
 
         log.info("오답노트 (영어 원문만): {}", wongNotes);
         model.addAttribute("wrongSentences", wongNotes);
+        model.addAttribute("user", user);
         return "wrongNoteView";
     }
 }
