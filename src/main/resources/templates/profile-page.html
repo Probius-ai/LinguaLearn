@@ -1,148 +1,404 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>프로필 - LinguaLearn</title>
-    <!-- Bootstrap 4 CSS (CDN) -->
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/profile.css}">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script th:src="@{/js/theme-switcher.js}" defer></script>
     <script th:src="@{/js/profile.js}" defer></script>
 </head>
 <body>
-<!-- 헤더 영역 (메인 페이지와 동일) -->
-<header class="header">
-    <div class="container header-container">
-        <div class="logo">
-            <h1><a th:href="@{/}"><i class="fas fa-language"></i>LinguaLearn</a></h1>
-        </div>
-        <nav class="main-nav">
-            <ul>
-                <li><a th:href="@{/}">홈</a></li>
-                <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
-                <li><a th:href="@{/translate}">번역 도구</a></li>
-                <li><a th:href="@{/words}">추천 단어</a></li>
-            </ul>
-        </nav>
-        <div class="user-actions">
-            <div class="theme-switcher">
-                <button id="theme-toggle" aria-label="테마 변경">
-                    <i class="fas fa-sun light-icon"></i>
-                    <i class="fas fa-moon dark-icon"></i>
-                </button>
-                <div class="theme-dropdown">
-                    <button data-theme="light">Light</button>
-                    <button data-theme="dark">Dark</button>
-                    <button data-theme="blue">Blue</button>
-                    <button data-theme="green">Green</button>
+    <!-- 헤더 영역 (메인 페이지와 동일) -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">홈</a></li>
+                    <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                    <li><a th:href="@{/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/words}">추천 단어</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                <div class="profile-dropdown">
+                    <div class="avatar" th:text="${#strings.substring(user.name, 0, 1)}">U</div>
+                    <div class="dropdown-menu">
+                        <a th:href="@{/profile}" class="active">프로필</a>
+                        <a th:href="@{/settings}">설정</a>
+                        <a th:href="@{/logout}">로그아웃</a>
+                    </div>
                 </div>
             </div>
-            <div class="profile-dropdown">
-                <div class="avatar" th:text="${#strings.substring(user.displayName, 0, 1)}">U</div>
-                <div class="dropdown-menu">
-                    <a th:href="@{/profile}" class="active">프로필</a>
-                    <a th:href="@{/settings}">설정</a>
-                    <a th:href="@{/logout}">로그아웃</a>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="profile-main">
+        <div class="container">
+            <div class="profile-header">
+                <div class="profile-cover"></div>
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        <div class="avatar large" th:text="${#strings.substring(user.name, 0, 1)}">U</div>
+                    </div>
+                    <div class="profile-details">
+                        <h1 th:text="${user.name}">사용자 이름</h1>
+                        <p class="user-email" th:text="${user.email}">user@example.com</p>
+                        <div class="user-stats">
+                            <div class="stat">
+                                <span class="stat-value" th:text="${user.daysStreak}">15</span>
+                                <span class="stat-label">연속 학습일</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" th:text="${user.wordsLearned}">320</span>
+                                <span class="stat-label">학습 단어 수</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" th:text="${user.quizCompleted}">42</span>
+                                <span class="stat-label">완료한 퀴즈</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary edit-profile-btn">
+                        <i class="fas fa-pencil-alt"></i> 프로필 수정
+                    </button>
+                </div>
+            </div>
+
+            <div class="profile-content">
+                <div class="profile-tabs">
+                    <button class="tab-btn active" data-tab="progress">학습 진행도</button>
+                    <button class="tab-btn" data-tab="activity">최근 활동</button>
+                    <button class="tab-btn" data-tab="favorites">즐겨찾기</button>
+                    <button class="tab-btn" data-tab="settings">설정</button>
+                </div>
+
+                <!-- 학습 진행도 탭 -->
+                <div class="tab-content active" id="progress-tab">
+                    <div class="progress-overview">
+                        <h2>학습 개요</h2>
+                        <div class="language-progress">
+                            <div class="language-item" th:each="lang : ${user.languages}">
+                                <div class="language-header">
+                                    <h3 th:text="${lang.name}">영어</h3>
+                                    <span class="level" th:text="${lang.level}">초급</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" th:style="'width: ' + ${lang.progress} + '%'"></div>
+                                </div>
+                                <div class="progress-info">
+                                    <span th:text="${lang.progress} + '%'">25%</span>
+                                    <span>다음 레벨까지: <span th:text="${100 - lang.progress} + '%'">75%</span></span>
+                                </div>
+                            </div>
+                            
+                            <!-- 더미 데이터 (실제로는 타임리프로 대체) -->
+                            <div class="language-item">
+                                <div class="language-header">
+                                    <h3>스페인어</h3>
+                                    <span class="level">초급</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 35%"></div>
+                                </div>
+                                <div class="progress-info">
+                                    <span>35%</span>
+                                    <span>다음 레벨까지: 65%</span>
+                                </div>
+                            </div>
+                            <div class="language-item">
+                                <div class="language-header">
+                                    <h3>일본어</h3>
+                                    <span class="level">입문</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 15%"></div>
+                                </div>
+                                <div class="progress-info">
+                                    <span>15%</span>
+                                    <span>다음 레벨까지: 85%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="learning-stats">
+                        <h2>학습 통계</h2>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>이번 주 학습</h3>
+                                    <p class="stat-value" th:text="${user.weeklyLearningTime} + ' 분'">180 분</p>
+                                    <p class="stat-change positive">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span th:text="${user.weeklyLearningTimeChange} + '%'">15%</span> 증가
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>학습 단어</h3>
+                                    <p class="stat-value" th:text="${user.wordsLearned}">320</p>
+                                    <p class="stat-change positive">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span th:text="${user.wordsLearnedChange} + '%'">8%</span> 증가
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>정확도</h3>
+                                    <p class="stat-value" th:text="${user.accuracy} + '%'">78%</p>
+                                    <p class="stat-change negative">
+                                        <i class="fas fa-arrow-down"></i>
+                                        <span th:text="${user.accuracyChange} + '%'">3%</span> 감소
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-achievements">
+                        <h2>최근 업적</h2>
+                        <div class="achievements-list">
+                            <div class="achievement-item" th:each="achievement : ${user.recentAchievements}">
+                                <div class="achievement-icon" th:class="'achievement-icon ' + ${achievement.type}">
+                                    <i th:class="${achievement.icon}"></i>
+                                </div>
+                                <div class="achievement-details">
+                                    <h3 th:text="${achievement.title}">5일 연속 학습</h3>
+                                    <p th:text="${achievement.description}">5일 연속으로 학습을 완료했습니다!</p>
+                                    <span class="achievement-date" th:text="${#dates.format(achievement.date, 'yyyy-MM-dd')}">2025-04-10</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 더미 데이터 (실제로는 타임리프로 대체) -->
+                            <div class="achievement-item">
+                                <div class="achievement-icon streak">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div class="achievement-details">
+                                    <h3>10일 연속 학습</h3>
+                                    <p>10일 연속으로 학습을 완료했습니다!</p>
+                                    <span class="achievement-date">2025-04-12</span>
+                                </div>
+                            </div>
+                            <div class="achievement-item">
+                                <div class="achievement-icon quiz">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <div class="achievement-details">
+                                    <h3>퀴즈 마스터</h3>
+                                    <p>단어 퀴즈에서 10번 연속 정답을 맞혔습니다!</p>
+                                    <span class="achievement-date">2025-04-08</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 다른 탭들의 내용 (간략하게 구현) -->
+                <div class="tab-content" id="activity-tab">
+                    <h2>최근 활동</h2>
+                    <div class="activity-timeline">
+                        <div class="timeline-item" th:each="activity : ${user.recentActivities}">
+                            <div class="timeline-icon" th:class="'timeline-icon ' + ${activity.type}">
+                                <i th:class="${activity.icon}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h3 th:text="${activity.title}">영어 단어 퀴즈 완료</h3>
+                                <p th:text="${activity.description}">10개의 단어 퀴즈를 완료했습니다. 정확도 80%</p>
+                                <span class="timeline-date" th:text="${#dates.format(activity.date, 'yyyy-MM-dd HH:mm')}">2025-04-14 14:30</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 더미 데이터 (실제로는 타임리프로 대체) -->
+                        <div class="timeline-item">
+                            <div class="timeline-icon quiz">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h3>영어 단어 퀴즈 완료</h3>
+                                <p>10개의 단어 퀴즈를 완료했습니다. 정확도 80%</p>
+                                <span class="timeline-date">2025-04-14 14:30</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-icon translate">
+                                <i class="fas fa-language"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h3>번역 도구 사용</h3>
+                                <p>5개의 문장을 영어에서 한국어로 번역했습니다.</p>
+                                <span class="timeline-date">2025-04-14 12:15</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="favorites-tab">
+                    <h2>즐겨찾기</h2>
+                    <div class="favorites-container">
+                        <div class="favorites-category">
+                            <h3>즐겨찾기 단어</h3>
+                            <div class="favorite-words">
+                                <div class="word-chip" th:each="word : ${user.favoriteWords}">
+                                    <span th:text="${word.original}">Serendipity</span>
+                                    <span class="word-translation" th:text="${word.translation}">우연한 행운</span>
+                                    <button class="remove-favorite"><i class="fas fa-times"></i></button>
+                                </div>
+                                
+                                <!-- 더미 데이터 (실제로는 타임리프로 대체) -->
+                                <div class="word-chip">
+                                    <span>Serendipity</span>
+                                    <span class="word-translation">우연한 행운</span>
+                                    <button class="remove-favorite"><i class="fas fa-times"></i></button>
+                                </div>
+                                <div class="word-chip">
+                                    <span>Ephemeral</span>
+                                    <span class="word-translation">덧없는</span>
+                                    <button class="remove-favorite"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="settings-tab">
+                    <h2>사용자 설정</h2>
+                    <div class="settings-form">
+                        <form th:action="@{/profile/settings}" method="post">
+                            <div class="form-section">
+                                <h3>계정 설정</h3>
+                                <div class="form-group">
+                                    <label for="display-name">이름</label>
+                                    <input type="text" id="display-name" name="displayName" th:value="${user.name}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">이메일</label>
+                                    <input type="email" id="email" name="email" th:value="${user.email}" disabled>
+                                    <small>이메일 변경은 고객센터로 문의해주세요.</small>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>학습 설정</h3>
+                                <div class="form-group">
+                                    <label for="daily-goal">일일 학습 목표</label>
+                                    <select id="daily-goal" name="dailyGoal">
+                                        <option value="5" th:selected="${user.dailyGoal == 5}">5분</option>
+                                        <option value="10" th:selected="${user.dailyGoal == 10}">10분</option>
+                                        <option value="15" th:selected="${user.dailyGoal == 15}">15분</option>
+                                        <option value="30" th:selected="${user.dailyGoal == 30}">30분</option>
+                                        <option value="60" th:selected="${user.dailyGoal == 60}">1시간</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="primary-language">주 학습 언어</label>
+                                    <select id="primary-language" name="primaryLanguage">
+                                        <option value="en" th:selected="${user.primaryLanguage == 'en'}">영어</option>
+                                        <option value="es" th:selected="${user.primaryLanguage == 'es'}">스페인어</option>
+                                        <option value="ja" th:selected="${user.primaryLanguage == 'ja'}">일본어</option>
+                                        <option value="fr" th:selected="${user.primaryLanguage == 'fr'}">프랑스어</option>
+                                        <option value="de" th:selected="${user.primaryLanguage == 'de'}">독일어</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>알림 설정</h3>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="email-notification" name="emailNotification" th:checked="${user.emailNotification}">
+                                    <label for="email-notification">이메일 알림</label>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="push-notification" name="pushNotification" th:checked="${user.pushNotification}">
+                                    <label for="push-notification">푸시 알림</label>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">설정 저장</button>
+                                <button type="reset" class="btn btn-secondary">초기화</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</header>
-<!-- 배경 내용 (예: 사용자 상세 정보) -->
-<div class="container mt-5">
-    <h1>사용자 상세 정보</h1>
-    <p>Email: <span th:text="${user.email}"></span></p>
-    <p>Name: <span th:text="${user.displayName}"></span></p>
-    <button type="button" class="btn btn-primary" onclick="showModal()">프로필 수정</button>
-</div>
+    </main>
 
-<!-- 전체 배경 오버레이 -->
-<div id="modalBackdrop" class="modal-backdrop-custom" style="display:none;"></div>
-
-<!-- 사용자 수정 모달 -->
-<div id="userModal" class="modal-custom" style="display:none;">
-    <div class="modal-header">
-        <h5 class="modal-title">사용자 정보 수정</h5>
-        <button type="button" class="close" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-        <form th:action="@{/profile/settings}" method="post">
-            <div class="form-group">
-                <label for="displayName">닉네임</label>
-                <input type="text" class="form-control" id="displayName" name="displayName" th:value="${user.displayName}" required>
+    <!-- 푸터 (메인 페이지와 동일) -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a href="#">그림 단어 퀴즈</a></li>
+                            <li><a href="#">문장 번역</a></li>
+                            <li><a href="#">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">취소</button>
-                <button type="submit" class="btn btn-primary">저장</button>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
             </div>
-        </form>
-    </div>
-</div>
-
-<!-- 푸터 (메인 페이지와 동일) -->
-<!--<footer class="footer">-->
-<!--    <div class="container">-->
-<!--        <div class="footer-content">-->
-<!--            <div class="footer-logo">-->
-<!--                <h2><i class="fas fa-language"></i> LinguaLearn</h2>-->
-<!--                <p>언어를 배우는 새로운 방법</p>-->
-<!--            </div>-->
-<!--            <div class="footer-links">-->
-<!--                <div class="link-group">-->
-<!--                    <h3>기능</h3>-->
-<!--                    <ul>-->
-<!--                        <li><a href="#">그림 단어 퀴즈</a></li>-->
-<!--                        <li><a href="#">문장 번역</a></li>-->
-<!--                        <li><a href="#">일일 추천 단어</a></li>-->
-<!--                    </ul>-->
-<!--                </div>-->
-<!--                <div class="link-group">-->
-<!--                    <h3>회사</h3>-->
-<!--                    <ul>-->
-<!--                        <li><a href="#">소개</a></li>-->
-<!--                        <li><a href="#">연락처</a></li>-->
-<!--                        <li><a href="#">연락처</a></li>-->
-<!--                        <li><a href="#">자주 묻는 질문</a></li>-->
-<!--                    </ul>-->
-<!--                </div>-->
-<!--                <div class="link-group">-->
-<!--                    <h3>법적 정보</h3>-->
-<!--                    <ul>-->
-<!--                        <li><a href="#">이용약관</a></li>-->
-<!--                        <li><a href="#">개인정보처리방침</a></li>-->
-<!--                    </ul>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--        <div class="footer-bottom">-->
-<!--            <p>&copy; 2025 LinguaLearn. All rights reserved.</p>-->
-<!--            <div class="social-links">-->
-<!--                <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>-->
-<!--                <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>-->
-<!--                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</footer>-->
-<!-- jQuery, Popper.js, Bootstrap JS (CDN) -->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-
-<script>
-    // 모달을 보이게 하는 함수
-    function showModal() {
-        document.getElementById("modalBackdrop").style.display = "block";
-        document.getElementById("userModal").style.display = "block";
-    }
-    // 모달을 닫는 함수
-    function closeModal() {
-        document.getElementById("modalBackdrop").style.display = "none";
-        document.getElementById("userModal").style.display = "none";
-    }
-</script>
+        </div>
+    </footer>
 </body>
 </html>
