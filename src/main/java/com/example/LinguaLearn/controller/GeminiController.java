@@ -63,31 +63,40 @@ public class GeminiController {
             return ResponseEntity.badRequest().body(Map.of("error", "Translation failed: " + e.getMessage()));
         }
     }
-    
+
     @GetMapping("/daily-word")
     public String showDailyWordPage(Model model, HttpSession session) {
         User user = (User) session.getAttribute("user");
         boolean isLoggedIn = (user != null);
         model.addAttribute("isLoggedIn", isLoggedIn);
-        
+
         try {
             String language = "english"; // Default language
             String level = "beginner";   // Default level
-            
+
             // If user is logged in, use their preferences
             if (isLoggedIn && user.getPrimaryLanguage() != null) {
                 language = user.getPrimaryLanguage();
             }
-            
+
             Map<String, String> wordData = geminiService.getTodayWord(language, level);
+
+            // wordData가 null인 경우 처리
+            if (wordData == null) {
+                model.addAttribute("error", "오늘의 단어를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.");
+                return "daily-word";
+            }
+
             model.addAttribute("wordData", wordData);
             model.addAttribute("language", language);
-            
+            // error 변수를 명시적으로 false로 설정
+            model.addAttribute("error", false);
+
         } catch (Exception e) {
             logger.error("Error fetching daily word", e);
-            model.addAttribute("error", "Could not load today's word. Please try again later.");
+            model.addAttribute("error", "단어 정보를 가져오는 중 오류가 발생했습니다: " + e.getMessage());
         }
-        
+
         return "daily-word";
     }
     
