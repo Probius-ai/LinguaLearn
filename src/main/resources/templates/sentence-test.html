@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문장 테스트 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+    
+    <style>
+        .sentence-test-container {
+            max-width: 800px;
+            margin: 2rem auto 4rem;
+        }
+        
+        .test-box {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 25px var(--shadow);
+            margin-bottom: 3rem;
+        }
+        
+        .login-prompt {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            background-color: var(--bg-secondary);
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+        
+        .login-prompt h2 {
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+        
+        .login-prompt p {
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .test-header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .test-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        
+        .test-stats {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .test-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .sentence-area {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .sentence-label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .sentence-text {
+            font-size: 1.5rem;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .sentence-language {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        .listen-button {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background-color: var(--accent);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .listen-button:hover {
+            background-color: var(--accent-hover);
+            transform: scale(1.05);
+        }
+        
+        .translation-area {
+            margin-bottom: 2rem;
+        }
+        
+        .translation-area label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .translation-input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+        
+        .translation-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        .submit-button {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            background-color: var(--accent);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .submit-button:hover {
+            background-color: var(--accent-hover);
+        }
+        
+        .submit-button:disabled {
+            background-color: var(--gray-300);
+            cursor: not-allowed;
+        }
+        
+        .result-area {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            display: none; /* 기본적으로 숨김 */
+        }
+        
+        .result-area.correct {
+            border-left: 5px solid var(--success);
+        }
+        
+        .result-area.incorrect {
+            border-left: 5px solid var(--error);
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .result-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+        
+        .result-icon.correct {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+        }
+        
+        .result-icon.incorrect {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--error);
+        }
+        
+        .result-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .result-title.correct {
+            color: var(--success);
+        }
+        
+        .result-title.incorrect {
+            color: var(--error);
+        }
+        
+        .result-explanation {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .next-button {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--accent);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .next-button:hover {
+            background-color: var(--accent-hover);
+        }
+        
+        .loading-spinner {
+            display: none;
+            margin: 1rem auto;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--gray-200);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--error);
+            background-color: rgba(220, 53, 69, 0.1);
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .test-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .test-stats {
+                width: 100%;
+            }
+            
+            .test-stat {
+                flex: 1;
+            }
+            
+            .sentence-text {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">홈</a></li>
+                    <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                    <li><a th:href="@{/ai/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
+                    <li><a th:href="@{/ai/sentence-test}" class="active">문장 테스트</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                
+                <!-- 로그인 버튼 (세션에 사용자가 없을 때만 표시) -->
+                <button th:if="${!isLoggedIn}" class="btn login-btn" id="login-btn">로그인</button>
+
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div th:if="${isLoggedIn}" class="user-logged-in">
+                    <a th:href="@{/profile}" class="profile-link" title="프로필 보기">
+                        <div class="avatar" th:text="${#strings.substring(session.user.displayName, 0, 1)}">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main>
+        <div class="container sentence-test-container">
+            <h1 class="section-title">AI 문장 테스트</h1>
+            
+            <!-- 로그인 필요 안내 -->
+            <div th:if="${loginPrompt}" class="login-prompt">
+                <h2>문장 테스트를 시작하려면 로그인이 필요합니다</h2>
+                <p>로그인하여 번역 테스트를 진행하고 학습 진행 상황을 저장하세요.</p>
+                <button class="btn btn-primary" onclick="document.getElementById('login-btn').click()">
+                    로그인하기
+                </button>
+            </div>
+            
+            <!-- 오류 메시지 (필요 시 표시) -->
+            <div th:if="${error}" class="error-message" th:text="${error}">
+                오류 메시지
+            </div>
+            
+            <!-- 테스트 영역 -->
+            <div th:if="${!loginPrompt && !error}" class="test-box">
+                <div class="test-header">
+                    <h2>영어 ➡️ 한국어 번역 테스트</h2>
+                    <div class="test-stats">
+                        <div class="test-stat">
+                            <div class="stat-value" id="correct-count">0</div>
+                            <div class="stat-label">정답</div>
+                        </div>
+                        <div class="test-stat">
+                            <div class="stat-value" id="incorrect-count">0</div>
+                            <div class="stat-label">오답</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sentence-area">
+                    <div class="sentence-label">다음 문장을 한국어로 번역하세요:</div>
+                    <div class="sentence-text" id="test-sentence" th:text="${testSentence}">
+                        I went to the store to buy some groceries yesterday.
+                    </div>
+                    <div class="sentence-language">영어</div>
+                    
+                    <button class="listen-button" id="listen-button">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+                
+                <div class="translation-area">
+                    <label for="translation-input">번역:</label>
+                    <input type="text" id="translation-input" class="translation-input" placeholder="한국어로 번역한 문장을 입력하세요...">
+                </div>
+                
+                <button id="submit-button" class="submit-button">
+                    <span>확인하기</span>
+                </button>
+                
+                <div id="loading-spinner" class="loading-spinner"></div>
+                
+                <div id="result-area" class="result-area">
+                    <div class="result-header">
+                        <div class="result-icon" id="result-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="result-title" id="result-title">정답입니다!</div>
+                    </div>
+                    <div class="result-explanation" id="result-explanation">
+                        번역이 정확합니다.
+                    </div>
+                    <button id="next-button" class="next-button">
+                        다음 문장 <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+                
+                <!-- 테스트 완료 메시지 (초기에는 숨김) -->
+                <div id="test-complete" class="result-area" style="display: none;">
+                    <div class="result-header">
+                        <div class="result-icon correct">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="result-title correct">테스트 완료!</div>
+                    </div>
+                    <div class="result-explanation">
+                        <p>수고하셨습니다! 총 <span id="total-sentences">0</span>개의 문장 중 <span id="final-correct">0</span>개를 맞추셨습니다.</p>
+                        <p>정확도: <span id="accuracy-percentage">0%</span></p>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <a th:href="@{/ai/analyze-progress}" class="next-button">
+                            분석 결과 보기 <i class="fas fa-chart-line"></i>
+                        </a>
+                        <button id="restart-button" class="next-button" style="background-color: var(--bg-secondary); color: var(--text-primary); margin-left: 0.5rem;">
+                            다시 시작 <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a th:href="@{/quiz/image}">그림 단어 퀴즈</a></li>
+                            <li><a th:href="@{/ai/translate}">문장 번역</a></li>
+                            <li><a th:href="@{/ai/daily-word}">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 로그인 모달 -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <h2>로그인 또는 회원가입</h2>
+            </div>
+            <div class="modal-body">
+                <div id="firebaseui-auth-container"></div>
+                <div id="auth-error" style="color: var(--error); margin-top: 15px; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- 스크립트 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <script th:src="@{/js/login-modal.js}" defer></script>
+    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+    
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM 요소
+            const testSentence = document.getElementById('test-sentence');
+            const listenButton = document.getElementById('listen-button');
+            const translationInput = document.getElementById('translation-input');
+            const submitButton = document.getElementById('submit-button');
+            const resultArea = document.getElementById('result-area');
+            const resultIcon = document.getElementById('result-icon');
+            const resultTitle = document.getElementById('result-title');
+            const resultExplanation = document.getElementById('result-explanation');
+            const nextButton = document.getElementById('next-button');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const correctCount = document.getElementById('correct-count');
+            const incorrectCount = document.getElementById('incorrect-count');
+            const testComplete = document.getElementById('test-complete');
+            const totalSentences = document.getElementById('total-sentences');
+            const finalCorrect = document.getElementById('final-correct');
+            const accuracyPercentage = document.getElementById('accuracy-percentage');
+            const restartButton = document.getElementById('restart-button');
+            
+            // 초기 설정
+            let currentCorrect = 0;
+            let currentIncorrect = 0;
+            let totalAttempts = 0;
+            let currentSentence = /*[[${testSentence}]]*/ 'I went to the store to buy some groceries yesterday.';
+            
+            // 최대 테스트 세션 길이 (몇 개의 문장을 테스트할지)
+            const MAX_TEST_LENGTH = 10;
+            
+            // 음성 듣기 버튼
+            if (listenButton) {
+                listenButton.addEventListener('click', function() {
+                    if (testSentence) {
+                        // Web Speech API를 사용한 발음
+                        const utterance = new SpeechSynthesisUtterance(testSentence.textContent);
+                        utterance.lang = 'en-US'; // 언어 설정 (영어)
+                        speechSynthesis.speak(utterance);
+                    }
+                });
+            }
+            
+            // 제출 버튼
+            if (submitButton) {
+                submitButton.addEventListener('click', submitTranslation);
+            }
+            
+            // 입력 필드에서 엔터 키 처리
+            if (translationInput) {
+                translationInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitTranslation();
+                    }
+                });
+            }
+            
+            // 다음 버튼
+            if (nextButton) {
+                nextButton.addEventListener('click', loadNextSentence);
+            }
+            
+            // 다시 시작 버튼
+            if (restartButton) {
+                restartButton.addEventListener('click', function() {
+                    // 카운터 초기화
+                    currentCorrect = 0;
+                    currentIncorrect = 0;
+                    totalAttempts = 0;
+                    
+                    // UI 업데이트
+                    correctCount.textContent = '0';
+                    incorrectCount.textContent = '0';
+                    
+                    // 완료 메시지 숨기기
+                    testComplete.style.display = 'none';
+                    
+                    // 다음 문장 로드
+                    loadNextSentence();
+                });
+            }
+            
+            // 번역 제출 함수
+            function submitTranslation() {
+                if (!translationInput.value.trim()) {
+                    alert('번역을 입력해주세요.');
+                    return;
+                }
+                
+                // 제출 버튼과 입력 필드 비활성화
+                submitButton.disabled = true;
+                translationInput.disabled = true;
+                
+                // 로딩 스피너 표시
+                loadingSpinner.style.display = 'block';
+                
+                // API 호출
+                fetch('/ai/check-translation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'originalSentence': currentSentence,
+                        'userTranslation': translationInput.value,
+                        'targetLanguage': 'korean'
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Translation check request failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 로딩 스피너 숨기기
+                    loadingSpinner.style.display = 'none';
+                    
+                    // 결과 표시
+                    resultArea.style.display = 'block';
+                    
+                    if (data.correct) {
+                        // 정답 처리
+                        resultArea.className = 'result-area correct';
+                        resultIcon.className = 'result-icon correct';
+                        resultIcon.innerHTML = '<i class="fas fa-check"></i>';
+                        resultTitle.className = 'result-title correct';
+                        resultTitle.textContent = '정답입니다!';
+                        
+                        // 카운터 증가
+                        currentCorrect++;
+                        correctCount.textContent = currentCorrect;
+                    } else {
+                        // 오답 처리
+                        resultArea.className = 'result-area incorrect';
+                        resultIcon.className = 'result-icon incorrect';
+                        resultIcon.innerHTML = '<i class="fas fa-times"></i>';
+                        resultTitle.className = 'result-title incorrect';
+                        resultTitle.textContent = '오답입니다.';
+                        
+                        // 카운터 증가
+                        currentIncorrect++;
+                        incorrectCount.textContent = currentIncorrect;
+                    }
+                    
+                    // 설명 텍스트 설정
+                    resultExplanation.textContent = data.explanation;
+                    
+                    // 다음 문장 미리 저장
+                    currentSentence = data.nextSentence;
+                    
+                    // 총 시도 횟수 증가
+                    totalAttempts++;
+                    
+                    // 최대 테스트 길이에 도달했는지 확인
+                    if (totalAttempts >= MAX_TEST_LENGTH) {
+                        // 마지막 문장인 경우 다음 버튼 대신 결과 보기 버튼 표시
+                        nextButton.textContent = '결과 보기';
+                        nextButton.onclick = showTestComplete;
+                    }
+                })
+                .catch(error => {
+                    console.error('Translation check error:', error);
+                    alert('번역 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    
+                    // 로딩 스피너 숨기기
+                    loadingSpinner.style.display = 'none';
+                    
+                    // 제출 버튼과 입력 필드 활성화
+                    submitButton.disabled = false;
+                    translationInput.disabled = false;
+                });
+            }
+            
+            // 다음 문장 로드 함수
+            function loadNextSentence() {
+                // 결과 영역 숨기기
+                resultArea.style.display = 'none';
+                
+                // 이미 다음 문장이 있는 경우
+                if (currentSentence) {
+                    testSentence.textContent = currentSentence;
+                    
+                    // 입력 필드 초기화 및 활성화
+                    translationInput.value = '';
+                    translationInput.disabled = false;
+                    translationInput.focus();
+                    
+                    // 제출 버튼 활성화
+                    submitButton.disabled = false;
+                    
+                    return;
+                }
+                
+                // 다음 문장이 없는 경우 API에서 가져오기
+                loadingSpinner.style.display = 'block';
+                
+                fetch('/ai/sentence-test?ajax=true')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch next sentence');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 로딩 스피너 숨기기
+                        loadingSpinner.style.display = 'none';
+                        
+                        // 새 문장 설정
+                        currentSentence = data.testSentence;
+                        testSentence.textContent = currentSentence;
+                        
+                        // 입력 필드 초기화 및 활성화
+                        translationInput.value = '';
+                        translationInput.disabled = false;
+                        translationInput.focus();
+                        
+                        // 제출 버튼 활성화
+                        submitButton.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching next sentence:', error);
+                        alert('다음 문장을 가져오는 중 오류가 발생했습니다.');
+                        
+                        // 로딩 스피너 숨기기
+                        loadingSpinner.style.display = 'none';
+                    });
+            }
+            
+            // 테스트 완료 표시 함수
+            function showTestComplete() {
+                // 결과 영역 숨기기
+                resultArea.style.display = 'none';
+                
+                // 총 문장 수와 정답 수 설정
+                totalSentences.textContent = totalAttempts;
+                finalCorrect.textContent = currentCorrect;
+                
+                // 정확도 계산
+                const accuracy = totalAttempts > 0 ? Math.round((currentCorrect / totalAttempts) * 100) : 0;
+                accuracyPercentage.textContent = accuracy + '%';
+                
+                // 테스트 완료 메시지 표시
+                testComplete.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

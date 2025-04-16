@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 단어 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+    
+    <style>
+        .daily-word-container {
+            max-width: 800px;
+            margin: 2rem auto 4rem;
+        }
+        
+        .word-card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 25px var(--shadow);
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .word-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background-color: var(--accent);
+            opacity: 0.1;
+            border-radius: 0 0 0 100%;
+        }
+        
+        .date-badge {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background-color: var(--accent);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 2;
+        }
+        
+        .language-badge {
+            display: inline-block;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--accent);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        
+        .word-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+        
+        .word-info {
+            flex: 1;
+        }
+        
+        .word-text {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .pronunciation {
+            font-style: italic;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .translation {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+        
+        .part-of-speech {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+        
+        .favorite-button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 1rem;
+        }
+        
+        .favorite-button:hover, .favorite-button.active {
+            color: #ff9800;
+            transform: scale(1.1);
+        }
+        
+        .favorite-button.active i::before {
+            content: "\f005"; /* Solid star */
+        }
+        
+        .example-section {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .example-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .example-sentence {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .sentence-translation {
+            color: var(--text-secondary);
+        }
+        
+        .play-button {
+            background-color: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 1.5rem;
+            box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+        }
+        
+        .play-button:hover {
+            background-color: var(--accent-hover);
+            transform: scale(1.05);
+        }
+        
+        .word-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        
+        .word-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .word-action-btn:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .word-archive {
+            background-color: var(--bg-secondary);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+        
+        .archive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .archive-filters {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .archive-filter {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .archive-filter.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .archive-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .archive-item {
+            background-color: var(--bg-color);
+            border-radius: 10px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+        }
+        
+        .archive-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px var(--shadow);
+            border-color: var(--accent);
+        }
+        
+        .archive-item-word {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--text-primary);
+        }
+        
+        .archive-item-translation {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .archive-item-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--error);
+            background-color: rgba(220, 53, 69, 0.1);
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .word-main {
+                flex-direction: column;
+            }
+            
+            .play-button {
+                margin: 1rem 0 0 0;
+            }
+            
+            .word-actions {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .archive-filters {
+                flex-wrap: wrap;
+            }
+            
+            .archive-items {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a th:href="@{/}">홈</a></li>
+                    <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                    <li><a th:href="@{/ai/translate}">번역 도구</a></li>
+                    <li><a th:href="@{/ai/daily-word}" class="active">추천 단어</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="theme-switcher">
+                    <button id="theme-toggle" aria-label="테마 변경">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </button>
+                    <div class="theme-dropdown">
+                        <button data-theme="light">Light</button>
+                        <button data-theme="dark">Dark</button>
+                        <button data-theme="blue">Blue</button>
+                        <button data-theme="green">Green</button>
+                    </div>
+                </div>
+                
+                <!-- 로그인 버튼 (세션에 사용자가 없을 때만 표시) -->
+                <button th:if="${!isLoggedIn}" class="btn login-btn" id="login-btn">로그인</button>
+
+                <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+                <div th:if="${isLoggedIn}" class="user-logged-in">
+                    <a th:href="@{/profile}" class="profile-link" title="프로필 보기">
+                        <div class="avatar" th:text="${#strings.substring(session.user.displayName, 0, 1)}">U</div>
+                    </a>
+                    <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main>
+        <div class="container daily-word-container">
+            <h1 class="section-title">오늘의 추천 단어</h1>
+            
+            <!-- 오류 메시지 (필요 시 표시) -->
+            <div th:if="${error}" class="error-message" th:text="${error}">
+                오류 메시지
+            </div>
+            
+            <!-- 오늘의 단어 카드 -->
+            <div th:if="${!error}" class="word-card">
+                <div class="date-badge" th:text="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}">2025-04-16</div>
+                <span class="language-badge" th:text="${#strings.equals(language, 'english') ? '영어' : language}">영어</span>
+                
+                <div class="word-main">
+                    <div class="word-info">
+                        <h2 class="word-text" th:text="${wordData.word}">Serendipity</h2>
+                        <p class="pronunciation" th:text="${wordData.pronunciation}">[ˌserənˈdɪpəti]</p>
+                        <p class="translation" th:text="${wordData.translation}">우연한 행운</p>
+                        <p class="part-of-speech" th:text="${wordData.partOfSpeech}">명사</p>
+                    </div>
+                    
+                    <button class="play-button" id="pronounce-button" th:attr="data-word=${wordData.word}">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+                
+                <div class="example-section">
+                    <h3>예문</h3>
+                    <p class="example-sentence" th:text="${wordData.exampleSentence}">
+                        Finding that rare book in a small shop was pure serendipity.
+                    </p>
+                    <p class="sentence-translation">
+                        작은 상점에서 그 희귀한 책을 발견한 것은 순전한 우연의 행운이었다.
+                    </p>
+                </div>
+                
+                <div class="word-actions">
+                    <button class="word-action-btn favorite-btn" th:if="${isLoggedIn}">
+                        <i class="far fa-star"></i> 즐겨찾기
+                    </button>
+                    <button class="word-action-btn copy-btn">
+                        <i class="far fa-copy"></i> 단어 복사
+                    </button>
+                    <a th:href="@{/ai/sentence-test}" class="word-action-btn">
+                        <i class="fas fa-tasks"></i> 문장 테스트
+                    </a>
+                    <button class="word-action-btn share-btn">
+                        <i class="fas fa-share-alt"></i> 공유하기
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 로그인한 사용자만 볼 수 있는 아카이브 -->
+            <div th:if="${isLoggedIn && !error}" class="word-archive">
+                <div class="archive-header">
+                    <h2>지난 단어 모음</h2>
+                    <div class="archive-filters">
+                        <button class="archive-filter active" data-language="all">전체</button>
+                        <button class="archive-filter" data-language="english">영어</button>
+                        <button class="archive-filter" data-language="japanese">일본어</button>
+                        <button class="archive-filter" data-language="chinese">중국어</button>
+                    </div>
+                </div>
+                
+                <div class="archive-items">
+                    <!-- 예시 아카이브 항목 (실제로는 이 부분이 동적으로 생성됨) -->
+                    <div class="archive-item" data-language="english">
+                        <div class="archive-item-word">Ephemeral</div>
+                        <div class="archive-item-translation">덧없는, 일시적인</div>
+                        <div class="archive-item-date">2025-04-15</div>
+                    </div>
+                    <div class="archive-item" data-language="english">
+                        <div class="archive-item-word">Ubiquitous</div>
+                        <div class="archive-item-translation">어디에나 있는</div>
+                        <div class="archive-item-date">2025-04-14</div>
+                    </div>
+                    <div class="archive-item" data-language="japanese">
+                        <div class="archive-item-word">はじめまして</div>
+                        <div class="archive-item-translation">처음 뵙겠습니다</div>
+                        <div class="archive-item-date">2025-04-13</div>
+                    </div>
+                    <div class="archive-item" data-language="chinese">
+                        <div class="archive-item-word">你好</div>
+                        <div class="archive-item-translation">안녕하세요</div>
+                        <div class="archive-item-date">2025-04-12</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                    <p>언어를 배우는 새로운 방법</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h3>기능</h3>
+                        <ul>
+                            <li><a th:href="@{/quiz/image}">그림 단어 퀴즈</a></li>
+                            <li><a th:href="@{/ai/translate}">문장 번역</a></li>
+                            <li><a th:href="@{/ai/daily-word}">일일 추천 단어</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>회사</h3>
+                        <ul>
+                            <li><a href="#">소개</a></li>
+                            <li><a href="#">연락처</a></li>
+                            <li><a href="#">자주 묻는 질문</a></li>
+                        </ul>
+                    </div>
+                    <div class="link-group">
+                        <h3>법적 정보</h3>
+                        <ul>
+                            <li><a href="#">이용약관</a></li>
+                            <li><a href="#">개인정보처리방침</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 로그인 모달 -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header">
+                <h2>로그인 또는 회원가입</h2>
+            </div>
+            <div class="modal-body">
+                <div id="firebaseui-auth-container"></div>
+                <div id="auth-error" style="color: var(--error); margin-top: 15px; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- 스크립트 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <script th:src="@{/js/login-modal.js}" defer></script>
+    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 발음 버튼
+            const pronounceButton = document.getElementById('pronounce-button');
+            if (pronounceButton) {
+                pronounceButton.addEventListener('click', function() {
+                    const word = this.getAttribute('data-word');
+                    if (word) {
+                        // Web Speech API를 사용한 발음
+                        const utterance = new SpeechSynthesisUtterance(word);
+                        utterance.lang = 'en-US'; // 언어 설정 (영어)
+                        speechSynthesis.speak(utterance);
+                    }
+                });
+            }
+            
+            // 즐겨찾기 버튼
+            const favoriteBtn = document.querySelector('.favorite-btn');
+            if (favoriteBtn) {
+                favoriteBtn.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const isFavorite = this.classList.contains('active');
+                    
+                    if (isFavorite) {
+                        this.innerHTML = '<i class="fas fa-star"></i> 즐겨찾기됨';
+                        
+                        // Firestore에 즐겨찾기 저장 (실제로는 API 호출)
+                        saveFavoriteWord();
+                    } else {
+                        this.innerHTML = '<i class="far fa-star"></i> 즐겨찾기';
+                        
+                        // Firestore에서 즐겨찾기 제거 (실제로는 API 호출)
+                        removeFavoriteWord();
+                    }
+                });
+            }
+            
+            // 단어 복사 버튼
+            const copyBtn = document.querySelector('.copy-btn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function() {
+                    const wordText = document.querySelector('.word-text').textContent;
+                    const translation = document.querySelector('.translation').textContent;
+                    
+                    // 클립보드에 복사
+                    const textToCopy = `${wordText} - ${translation}`;
+                    
+                    navigator.clipboard.writeText(textToCopy)
+                        .then(() => {
+                            // 복사 완료 메시지
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check"></i> 복사됨';
+                            
+                            // 3초 후 원래 버튼 텍스트로 복원
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                            }, 3000);
+                        })
+                        .catch(err => {
+                            console.error('클립보드 복사 실패:', err);
+                            alert('클립보드 복사에 실패했습니다.');
+                        });
+                });
+            }
+            
+            // 공유 버튼
+            const shareBtn = document.querySelector('.share-btn');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', function() {
+                    const wordText = document.querySelector('.word-text').textContent;
+                    const translation = document.querySelector('.translation').textContent;
+                    
+                    // Web Share API 사용 (지원되는 브라우저에서만)
+                    if (navigator.share) {
+                        navigator.share({
+                            title: '오늘의 단어 - LinguaLearn',
+                            text: `오늘의 단어: ${wordText} - ${translation}`,
+                            url: window.location.href
+                        })
+                        .then(() => console.log('공유 성공'))
+                        .catch(err => {
+                            console.error('공유 실패:', err);
+                            fallbackShare();
+                        });
+                    } else {
+                        fallbackShare();
+                    }
+                    
+                    // Web Share API를 지원하지 않는 경우 대체 방법
+                    function fallbackShare() {
+                        const shareText = `오늘의 단어: ${wordText} - ${translation}\n${window.location.href}`;
+                        
+                        try {
+                            // 클립보드에 복사
+                            navigator.clipboard.writeText(shareText)
+                                .then(() => {
+                                    alert('공유 텍스트가 클립보드에 복사되었습니다.');
+                                })
+                                .catch(err => {
+                                    console.error('클립보드 복사 실패:', err);
+                                    alert('공유 기능을 지원하지 않는 브라우저입니다.');
+                                });
+                        } catch (e) {
+                            alert('공유 기능을 지원하지 않는 브라우저입니다.');
+                        }
+                    }
+                });
+            }
+            
+            // 아카이브 필터
+            const archiveFilters = document.querySelectorAll('.archive-filter');
+            if (archiveFilters.length > 0) {
+                archiveFilters.forEach(filter => {
+                    filter.addEventListener('click', function() {
+                        // 활성 필터 변경
+                        document.querySelector('.archive-filter.active').classList.remove('active');
+                        this.classList.add('active');
+                        
+                        const language = this.getAttribute('data-language');
+                        filterArchiveItems(language);
+                    });
+                });
+                
+                // 아카이브 항목 필터링
+                function filterArchiveItems(language) {
+                    const items = document.querySelectorAll('.archive-item');
+                    
+                    items.forEach(item => {
+                        if (language === 'all' || item.getAttribute('data-language') === language) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                }
+            }
+            
+            // Firestore에 즐겨찾기 저장 (실제로는 백엔드 API 호출)
+            function saveFavoriteWord() {
+                const wordText = document.querySelector('.word-text').textContent;
+                const translation = document.querySelector('.translation').textContent;
+                
+                // API 호출 (예시)
+                fetch('/api/favorites/word/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        word: wordText,
+                        translation: translation
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('즐겨찾기 저장 실패');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('즐겨찾기 저장 성공:', data);
+                })
+                .catch(error => {
+                    console.error('즐겨찾기 저장 오류:', error);
+                    // 실패 시 UI 롤백
+                    document.querySelector('.favorite-btn').classList.remove('active');
+                    document.querySelector('.favorite-btn').innerHTML = '<i class="far fa-star"></i> 즐겨찾기';
+                });
+            }
+            
+            // Firestore에서 즐겨찾기 제거 (실제로는 백엔드 API 호출)
+            function removeFavoriteWord() {
+                const wordText = document.querySelector('.word-text').textContent;
+                
+                // API 호출 (예시)
+                fetch('/api/favorites/word/remove', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        word: wordText
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('즐겨찾기 제거 실패');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('즐겨찾기 제거 성공:', data);
+                })
+                .catch(error => {
+                    console.error('즐겨찾기 제거 오류:', error);
+                    // 실패 시 UI 롤백
+                    document.querySelector('.favorite-btn').classList.add('active');
+                    document.querySelector('.favorite-btn').innerHTML = '<i class="fas fa-star"></i> 즐겨찾기됨';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
