@@ -296,6 +296,8 @@ public class GeminiController {
             if ((correctTexts.size() + wrongTexts.size()) >= 3) {
                 analysis = geminiService.analyzeLearningProgress(correctTexts, wrongTexts);
             }
+            logger.info("correctTexts : {}", correctSentences);
+            logger.info("wrongTexts : {}", wrongSentences);
 
             model.addAttribute("totalCount", totalCount);
             model.addAttribute("correctCount", correctCount);
@@ -311,7 +313,6 @@ public class GeminiController {
             model.addAttribute("error", "Could not analyze your progress. Please try again later.");
             model.addAttribute("noData", false); // Explicitly set to avoid null checks
         }
-
         return "progress-analysis";
     }
 }
