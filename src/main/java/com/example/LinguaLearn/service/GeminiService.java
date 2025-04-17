@@ -194,10 +194,10 @@ public class GeminiService {
         
         return result;
     }
-    public String getResult(String wrongSentence, String userTranslation) {
-        String prompt = wrongSentence + " 를 번역한 결과가 " + userTranslation +
-                "이 맞는지 판단해줘(정답, 오답) *은 출력하지마, 이유를 알려줘(**은 출력하지마)";
-        log.info("Retry evaluation prompt: {}", prompt);
-        return getContents(prompt);
-    }
+//    public String getResult(String wrongSentence, String userTranslation) {
+//        String prompt = wrongSentence + " 를 번역한 결과가 " + userTranslation +
+//                "이 맞는지 판단해줘(정답, 오답) *은 출력하지마, 이유를 알려줘(**은 출력하지마)";
+//        logger.info("Retry evaluation prompt: {}", prompt);
+//        return getContents(prompt);
+//    }
 }

@@ -11,3 +11,5 @@ gemini:
   api:
     key: ${GEMINI_API_KEY} # Need to set this as environment variable
     url: ${GEMINI_API_URL} # Need to set this as environment variable
+server:
+  forward-headers-strategy=framework:
