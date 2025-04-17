@@ -322,6 +322,8 @@
             
             <!-- 테스트 영역 -->
             <div th:if="${(loginPrompt != null && !loginPrompt) && (error == null || !error)}" class="test-box">
+                <input type="hidden" id="language" th:value="${language}">
+                <input type="hidden" id="level" th:value="${level}">
                 <div class="test-header">
                     <h2>영어 ➡️ 한국어 번역 테스트</h2>
                     <div class="test-stats">
@@ -527,7 +529,7 @@
                     body: new URLSearchParams({
                         'originalSentence': currentSentence,
                         'userTranslation': translationInput.value,
-                        'targetLanguage': 'korean'
+                        'targetLanguage': document.getElementById('language').value
                     })
                 })
                 .then(response => {
