@@ -6,6 +6,8 @@
     <title>문장 테스트 - LinguaLearn</title>
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- FirebaseUI CSS -->
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
     <script th:src="@{/js/theme-switcher.js}" defer></script>
     
     <style>
@@ -419,11 +421,8 @@
     <div class="modal-overlay" id="modal-overlay"></div>
 
     <!-- 스크립트 -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
-    <script th:src="@{/js/login-modal.js}" defer></script>
-    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
+    <!-- 로그인 모달 스크립트 -->
+    <th:block th:replace="~{/fragment/loginModal :: firebase-scripts}"></th:block>
     
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {

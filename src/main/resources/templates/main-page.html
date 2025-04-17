@@ -10,15 +10,6 @@
     <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
 
     <script th:src="@{/js/theme-switcher.js}" defer></script>
-    <script th:src="@{/js/login-modal.js}" defer></script>
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <!-- Add Firebase products that you want to use -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <!-- FirebaseUI -->
-    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
-    <!-- Your Firebase Auth Main Script -->
-    <script th:src="@{/js/firebase-auth-main.js}" defer></script>
 </head>
 <body>
     <!-- 헤더 영역 -->
@@ -113,21 +104,8 @@
     <!-- 푸터 -->
     <div th:insert="~{/fragment/footer.html :: siteFooter}"></div>
     <!-- 로그인 모달 -->
-    <div class="modal" id="login-modal">
-        <div class="modal-content">
-            <button class="close-modal"><i class="fas fa-times"></i></button>
-            <div class="modal-header">
-                <h2>로그인 또는 회원가입</h2> <!-- Title updated -->
-            </div>
-            <div class="modal-body">
-                <!-- FirebaseUI Container -->
-                <div id="firebaseui-auth-container"></div>
-                <!-- Error Display Area -->
-                <div id="auth-error" style="color: var(--error); margin-top: 15px; text-align: center;"></div>
-                <!-- Removed original form and social buttons -->
-            </div>
-        </div>
-    </div>
-    <div class="modal-overlay" id="modal-overlay"></div>
+    <div th:insert="~{/fragment/loginModal.html :: loginModal}"></div>
+    <!-- 로그인 모달 스크립트 -->
+    <th:block th:replace="~{/fragment/loginModal :: firebase-scripts}"></th:block>
 </body>
 </html>
