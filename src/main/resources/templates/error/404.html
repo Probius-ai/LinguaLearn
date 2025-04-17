@@ -2,11 +2,122 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>404 - 페이지를 찾을 수 없습니다</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - 페이지를 찾을 수 없습니다 - LinguaLearn</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .error-container {
+      max-width: 800px;
+      margin: 2rem auto 4rem;
+      text-align: center;
+    }
+    
+    .error-code {
+      font-size: 8rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+    
+    .error-message {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      color: var(--text-primary);
+    }
+    
+    .error-description {
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+    
+    .home-button {
+      display: inline-block;
+      padding: 0.8rem 1.5rem;
+      background-color: var(--accent);
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      margin-bottom: 2rem;
+    }
+    
+    .home-button:hover {
+      background-color: var(--accent-hover);
+      transform: translateY(-3px);
+    }
+    
+    .dino-game-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: var(--bg-secondary);
+    }
+    
+    /* 다크모드 대응 */
+    [data-theme="dark"] #offline-resources-1x {
+      filter: invert(1);
+    }
+    
+    [data-theme="dark"] #offline-resources-2x {
+      filter: invert(1);
+    }
+    
+    /* 게임 캔버스 스타일 */
+    #offline-resources {
+      display: none;
+    }
+    
+    #main-frame-error {
+      width: 100%;
+      height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .runner-container {
+      width: 100%;
+      height: 150px;
+      max-width: 600px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .game-instructions {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    
+    @media (max-width: 768px) {
+      .error-code {
+        font-size: 6rem;
+      }
+      
+      .error-message {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
 </head>
 <body>
-<h1>😢 404 Not Found</h1>
-<p>요청하신 페이지를 찾을 수 없습니다.</p>
-<a href="/">홈으로 돌아가기</a>
+  <!-- 메인 컨텐츠 -->
+  <main>
+    <div class="error-container">
+      <div class="error-code">404</div>
+      <h1 class="error-message">페이지를 찾을 수 없습니다</h1>
+      <p class="error-description">요청하신 페이지가 존재하지 않거나 이동되었을 수 있습니다.</p>
+      <a href="/" class="home-button">
+        <i class="fas fa-home"></i> 홈으로 돌아가기
+      </a>
+      
 </body>
 </html>
