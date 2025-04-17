@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>랭킹 - LinguaLearn</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+  <link rel="stylesheet" th:href="@{/css/ranking.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script th:src="@{/js/theme-switcher.js}" defer></script>
+</head>
+<body>
+<!-- 헤더 영역 -->
+<header class="header">
+  <div class="container header-container">
+    <div class="logo">
+      <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+    </div>
+    <nav class="main-nav">
+      <ul>
+        <li><a th:href="@{/static}">홈</a></li>
+        <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+        <li><a th:href="@{/ai/translate}">번역 도구</a></li>
+        <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
+        <li><a th:href="@{/ai/sentence-test}">문장 테스트</a></li>
+        <li><a th:href="@{/wrong-sentences}">오답 노트</a></li>
+        <li><a th:href="@{/ranking}" class="active">랭킹</a></li>
+      </ul>
+    </nav>
+    <div class="user-actions">
+      <div class="theme-switcher">
+        <button id="theme-toggle" aria-label="테마 변경">
+          <i class="fas fa-sun light-icon"></i>
+          <i class="fas fa-moon dark-icon"></i>
+        </button>
+        <div class="theme-dropdown">
+          <button data-theme="light">Light</button>
+          <button data-theme="dark">Dark</button>
+          <button data-theme="blue">Blue</button>
+          <button data-theme="green">Green</button>
+        </div>
+      </div>
+
+      <!-- 로그인 버튼 (세션에 사용자가 없을 때만 표시) -->
+      <button th:if="${!isLoggedIn}" class="btn login-btn" id="login-btn">로그인</button>
+
+      <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+      <div th:if="${isLoggedIn}" class="user-logged-in">
+        <a th:href="@{/profile}" class="profile-link" title="프로필 보기">
+          <div class="avatar" th:text="${#strings.substring(user.displayName, 0, 1)}">U</div>
+        </a>
+        <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 메인 컨텐츠 -->
+<main>
+  <div class="container">
+    <h1 class="section-title">사용자 랭킹</h1>
+
+    <!-- 오류 메시지 (필요 시 표시) -->
+    <div th:if="${error}" class="error-message" th:text="${error}">
+      오류 메시지
+    </div>
+
+    <div class="ranking-container">
+      <div class="ranking-title"><i class="fas fa-trophy"></i> TOP 10 랭킹 <i class="fas fa-trophy"></i></div>
+
+      <!-- 랭킹 없는 경우 -->
+      <div th:if="${rankings == null || rankings.empty}" class="no-rankings">
+        <i class="fas fa-info-circle" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+        <p>아직 랭킹 데이터가 없습니다.</p>
+      </div>
+
+      <!-- 랭킹 표시 -->
+      <div th:if="${rankings != null && !rankings.empty}">
+        <!-- 1위 -->
+        <div th:if="${rankings.size() >= 1}" class="rank-card rank-1">
+          <div class="rank-medal">🥇</div>
+          <div class="rank-info">
+            <div class="rank-email" th:text="${rankings[0].displayName}">사용자명</div>
+            <div class="rank-score" th:text="${rankings[0].score + '점'}">100점</div>
+          </div>
+        </div>
+
+        <!-- 2위 -->
+        <div th:if="${rankings.size() >= 2}" class="rank-card rank-2">
+          <div class="rank-medal">🥈</div>
+          <div class="rank-info">
+            <div class="rank-email" th:text="${rankings[1].displayName}">사용자명</div>
+            <div class="rank-score" th:text="${rankings[1].score + '점'}">95점</div>
+          </div>
+        </div>
+
+        <!-- 3위 -->
+        <div th:if="${rankings.size() >= 3}" class="rank-card rank-3">
+          <div class="rank-medal">🥉</div>
+          <div class="rank-info">
+            <div class="rank-email" th:text="${rankings[2].displayName}">사용자명</div>
+            <div class="rank-score" th:text="${rankings[2].score + '점'}">90점</div>
+          </div>
+        </div>
+
+        <!-- 4위 이하 -->
+        <div th:each="rank, status : ${rankings}" th:if="${status.index >= 3}" class="rank-card rank-default">
+          <div class="rank-medal" th:text="${status.index + 1 + '위'}">4위</div>
+          <div class="rank-info">
+            <div class="rank-email" th:text="${rank.displayName}">사용자명</div>
+            <div class="rank-score" th:text="${rank.score + '점'}">85점</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 내 랭킹 (로그인 시) -->
+      <div th:if="${isLoggedIn && userRank != null}" class="my-rank">
+        <div class="my-rank-title">내 랭킹</div>
+        <div class="rank-card">
+          <div class="rank-medal" th:text="${userRank.rank + '위'}">42위</div>
+          <div class="rank-info">
+            <div class="rank-email" th:text="${user.displayName}">내 이름</div>
+            <div class="rank-score" th:text="${userRank.score + '점'}">45점</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 푸터 -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+        <p>언어를 배우는 새로운 방법</p>
+      </div>
+      <div class="footer-links">
+        <div class="link-group">
+          <h3>기능</h3>
+          <ul>
+            <li><a th:href="@{/quiz/image}">그림 단어 퀴즈</a></li>
+            <li><a th:href="@{/ai/translate}">문장 번역</a></li>
+            <li><a th:href="@{/ai/daily-word}">일일 추천 단어</a></li>
+          </ul>
+        </div>
+        <div class="link-group">
+          <h3>회사</h3>
+          <ul>
+            <li><a href="#">소개</a></li>
+            <li><a href="#">연락처</a></li>
+            <li><a href="#">자주 묻는 질문</a></li>
+          </ul>
+        </div>
+        <div class="link-group">
+          <h3>법적 정보</h3>
+          <ul>
+            <li><a href="#">이용약관</a></li>
+            <li><a href="#">개인정보처리방침</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+      <div class="social-links">
+        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- 로그인 모달 -->
+<div class="modal" id="login-modal">
+  <div class="modal-content">
+    <button class="close-modal"><i class="fas fa-times"></i></button>
+    <div class="modal-header">
+      <h2>로그인 또는 회원가입</h2>
+    </div>
+    <div class="modal-body">
+      <div id="firebaseui-auth-container"></div>
+      <div id="auth-error" style="color: var(--error); margin-top: 15px; text-align: center;"></div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-overlay"></div>
+
+<!-- 스크립트 -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+<script th:src="@{/js/login-modal.js}" defer></script>
+<script th:src="@{/js/firebase-auth-main.js}" defer></script>
+</body>
+</html>

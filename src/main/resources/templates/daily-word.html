@@ -312,6 +312,7 @@
                     <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
                     <li><a th:href="@{/ai/sentence-test}">문장 테스트</a></li>
                     <li><a th:href="@{/wrong-sentences}">오답 노트</a></li>
+                    <li><a th:href="@{/ranking}">랭킹</a></li>
                 </ul>
             </nav>
             <div class="user-actions">
@@ -397,7 +398,7 @@
             </div>
             
             <!-- 로그인한 사용자만 볼 수 있는 아카이브 -->
-            <div th:if="${isLoggedIn && !error}" class="word-archive">
+            <div th:if="${isLoggedIn && (error == null || #strings.isEmpty(error))}" class="word-archive">
                 <div class="archive-header">
                     <h2>지난 단어 모음</h2>
                     <div class="archive-filters">

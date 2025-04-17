@@ -1,0 +1,209 @@
+/* 랭킹 페이지 스타일 */
+.ranking-container {
+    max-width: 800px;
+    margin: 2rem auto 4rem;
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 10px 25px var(--shadow);
+}
+
+.ranking-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.ranking-title i {
+    color: #FFD700; /* Gold color for trophy icons */
+}
+
+.rank-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.rank-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px var(--shadow);
+}
+
+.rank-1 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.05) 100%);
+    border-left: 5px solid #FFD700;
+}
+
+.rank-2 {
+    background: linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(192, 192, 192, 0.05) 100%);
+    border-left: 5px solid #C0C0C0;
+}
+
+.rank-3 {
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.2) 0%, rgba(205, 127, 50, 0.05) 100%);
+    border-left: 5px solid #CD7F32;
+}
+
+.rank-default {
+    border-left: 5px solid var(--accent);
+}
+
+.rank-medal {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-right: 1.5rem;
+}
+
+.rank-info {
+    flex: 1;
+}
+
+.rank-email {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.rank-score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.my-rank {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.my-rank-title {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .rank-medal {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .rank-email {
+        font-size: 1rem;
+    }
+
+    .rank-score {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .ranking-container {
+        padding: 1.5rem;
+    }
+
+    .rank-card {
+        padding: 1rem;
+    }
+
+    .rank-medal {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+}
+
+/* Tab Navigation - specific to this design */
+.tab-navigation {
+    background-color: var(--bg-secondary);
+    box-shadow: 0 2px 4px var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.tabs {
+    display: flex;
+    list-style: none;
+    overflow-x: auto;
+    padding: 0;
+    margin: 0;
+}
+
+.tabs li {
+    flex-shrink: 0;
+}
+
+.tabs a {
+    display: block;
+    padding: 1rem 1.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.tabs a.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tabs a:hover {
+    color: var(--accent);
+}
+
+/* Style for the 'No rankings available' message */
+.no-rankings {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+    border-radius: 10px;
+    font-style: italic;
+}
+
+/* Animation for rank cards */
+.rank-card {
+    animation: fadeInUp 0.5s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Different animation delay for each card */
+.rank-card:nth-child(1) { animation-delay: 0.1s; }
+.rank-card:nth-child(2) { animation-delay: 0.2s; }
+.rank-card:nth-child(3) { animation-delay: 0.3s; }
+.rank-card:nth-child(4) { animation-delay: 0.4s; }
+.rank-card:nth-child(5) { animation-delay: 0.5s; }
+.rank-card:nth-child(6) { animation-delay: 0.6s; }
+.rank-card:nth-child(7) { animation-delay: 0.7s; }
+.rank-card:nth-child(8) { animation-delay: 0.8s; }
+.rank-card:nth-child(9) { animation-delay: 0.9s; }
+.rank-card:nth-child(10) { animation-delay: 1.0s; }

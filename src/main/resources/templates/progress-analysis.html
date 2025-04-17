@@ -355,6 +355,7 @@
                     <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
                     <li><a th:href="@{/ai/sentence-test}">문장 테스트</a></li>
                     <li><a th:href="@{/wrong-sentences}">오답 노트</a></li>
+                    <li><a th:href="@{/ranking}">랭킹</a></li>
                 </ul>
             </nav>
             <div class="user-actions">
@@ -405,7 +406,8 @@
             </div>
             
             <!-- 분석 결과 -->
-            <div th:if="${!noData && !error}" class="progress-card">
+            <!-- 수정된 코드 -->
+            <div th:if="${noData != null && noData == false && error == null}" class="progress-card">
                 <div class="stats-overview">
                     <div class="stat-card">
                         <div class="stat-icon">

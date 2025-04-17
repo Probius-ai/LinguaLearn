@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import com.example.LinguaLearn.service.RankingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ public class ImageQuizController {
     
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private RankingService rankingService;
 
     @GetMapping("/quiz/image")
     public String showQuizPage() {
@@ -91,7 +95,7 @@ public class ImageQuizController {
             return ResponseEntity.internalServerError().body(Map.of("error", "서버 오류: " + e.getMessage()));
         }
     }
-    
+
     @PostMapping("/api/quiz/score")
     @ResponseBody
     public ResponseEntity<?> updateScore(HttpSession session) {
@@ -99,16 +103,18 @@ public class ImageQuizController {
         if (user == null) {
             return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
         }
-        
+
         try {
-            // In a real implementation, you would update the user's score in the database
-            // For now, let's just return success
+            // Update user's score in the database (typically +1 for each correct answer)
+            // This is just an example, adjust points as needed for your scoring system
+            rankingService.updateUserScore(user.getUid(), 1L);
+
             return ResponseEntity.ok(Map.of("success", true, "message", "점수가 업데이트되었습니다."));
         } catch (Exception e) {
             logger.error("Error updating user score", e);
             return ResponseEntity.internalServerError().body(Map.of(
-                "success", false, 
-                "message", "점수 업데이트 중 오류가 발생했습니다: " + e.getMessage()));
+                    "success", false,
+                    "message", "점수 업데이트 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 
