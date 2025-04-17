@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import com.example.LinguaLearn.service.RankingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.LinguaLearn.model.User;
+import com.example.LinguaLearn.service.RankingService;
 import com.example.LinguaLearn.service.WordService;
 
 import jakarta.servlet.http.HttpSession;
@@ -64,24 +64,25 @@ public class ImageQuizController {
                 }
             }
             
-            // 새로운 방식으로 단어 가져오기
-            List<String> wordList = wordService.getWordsForQuiz(language, level);
+            // 단어 가져오기
+            List<WordService.WordDto> wordDtoList = wordService.getWordsByLanguageAndLevel(language, level);
             
-            if (wordList.isEmpty()) {
+            if (wordDtoList.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "단어가 없습니다."));
             }
 
             Random rand = new Random();
-            String answer = wordList.get(rand.nextInt(wordList.size()));
+            WordService.WordDto answerWordDto = wordDtoList.get(rand.nextInt(wordDtoList.size()));
+            String answer = answerWordDto.getText();
 
             Set<String> choices = new HashSet<>();
             choices.add(answer);
-            while (choices.size() < 4 && choices.size() < wordList.size()) {
-                choices.add(wordList.get(rand.nextInt(wordList.size())));
+            while (choices.size() < 4 && choices.size() < wordDtoList.size()) {
+                choices.add(wordDtoList.get(rand.nextInt(wordDtoList.size())).getText());
             }
 
-            // Use English translation for image search
-            String searchWord = translateForImageSearch(answer, language);
+            // 이미지 검색용 번역 가져오기 (translation 필드 사용)
+            String searchWord = answerWordDto.getTranslation();
             String imageUrl = fetchImageFromUnsplash(searchWord);
 
             Map<String, Object> quiz = new HashMap<>();
@@ -116,12 +117,6 @@ public class ImageQuizController {
                     "success", false,
                     "message", "점수 업데이트 중 오류가 발생했습니다: " + e.getMessage()));
         }
-    }
-
-    private String translateForImageSearch(String word, String language) {
-        // In a real implementation, you would use a translation service
-        // For simple demo purposes, returning the original word
-        return word;
     }
 
     private String fetchImageFromUnsplash(String searchWord) {
