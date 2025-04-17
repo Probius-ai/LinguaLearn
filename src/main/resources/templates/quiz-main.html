@@ -144,8 +144,7 @@
                 <div class="quiz-card" style="position: relative;">
                     <a th:href="@{/quiz/image}" class="quiz-card-link"></a>
                     <div class="quiz-card-img">
-                        <img th:src="@{/images/image-quiz.jpg}" alt="이미지 퀴즈" 
-                             src="https://images.unsplash.com/photo-1519389950473-47ba0277781c">
+                        <img th:src="@{${@environment.getProperty('app.image.image-quiz') ?: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c'}}" alt="이미지 퀴즈">
                     </div>
                     <div class="quiz-card-content">
                         <h3>그림 단어 퀴즈</h3>
@@ -165,8 +164,7 @@
                 <div class="quiz-card" style="position: relative;">
                     <span class="coming-soon">출시 예정</span>
                     <div class="quiz-card-img">
-                        <img th:src="@{/images/word-quiz.jpg}" alt="단어 맞추기 퀴즈"
-                             src="https://images.unsplash.com/photo-1543109740-4bdb38fda756">
+                        <img th:src="@{${@environment.getProperty('app.image.word-quiz') ?: 'https://images.unsplash.com/photo-1543109740-4bdb38fda756'}}" alt="단어 맞추기 퀴즈">
                     </div>
                     <div class="quiz-card-content">
                         <h3>단어 맞추기</h3>
@@ -186,8 +184,7 @@
                 <div class="quiz-card" style="position: relative;">
                     <span class="coming-soon">출시 예정</span>
                     <div class="quiz-card-img">
-                        <img th:src="@{/images/listening-quiz.jpg}" alt="듣기 퀴즈"
-                             src="https://images.unsplash.com/photo-1516057747705-0609711c769b">
+<!--                        <img th:src="@{${@environment.getProperty('app.image.listening-quiz') ?: 'https://images.unsplash.com/photo-1516057747705-0609711c769b'}}" alt="듣기 퀴즈">-->
                     </div>
                     <div class="quiz-card-content">
                         <h3>듣기 퀴즈</h3>
@@ -207,12 +204,11 @@
                 <div class="quiz-card" style="position: relative;">
                     <span class="coming-soon">출시 예정</span>
                     <div class="quiz-card-img">
-                        <img th:src="@{/images/sentence-quiz.jpg}" alt="문장 완성하기"
-                             src="https://images.unsplash.com/photo-1455390582262-044cdead277a">
+                        <img th:src="@{${@environment.getProperty('app.image.sentence-quiz') ?: 'https://images.unsplash.com/photo-1455390582262-044cdead277a'}}" alt="문장 완성하기">
                     </div>
                     <div class="quiz-card-content">
                         <h3>문장 완성하기</h3>
-                        <p>빈 칸에 알맞은 단어를 넣어 문장을 완성하는 퀴즈입니다. 문법과 맥락 이해력을 향상시킵니다.</p>
+                        <p>주어진 문장을 완성하는 퀴즈입니다. 문법과 어휘력을 향상시킵니다.</p>
                         <div class="quiz-card-footer">
                             <div class="difficulty">
                                 <i class="fas fa-star"></i>
