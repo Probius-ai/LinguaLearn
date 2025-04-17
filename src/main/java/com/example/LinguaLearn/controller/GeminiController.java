@@ -1,5 +1,24 @@
 package com.example.LinguaLearn.controller;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import com.example.LinguaLearn.model.User;
 import com.example.LinguaLearn.service.GeminiService;
 import com.example.LinguaLearn.service.UserService;
@@ -9,20 +28,7 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.SetOptions;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-
 import jakarta.servlet.http.HttpSession;
-
-import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 @Controller
 @RequestMapping("/ai")
@@ -254,9 +260,13 @@ public class GeminiController {
     @GetMapping("/analyze-progress")
     public String analyzeProgress(Model model, HttpSession session) {
         User user = (User) session.getAttribute("user");
-        if (user == null) {
+        boolean isLoggedIn = (user != null); // 로그인 여부 판단
+        model.addAttribute("isLoggedIn", isLoggedIn); // 모델에 추가!!
+
+        if (!isLoggedIn) {
             return "redirect:/login?redirect=/ai/analyze-progress";
         }
+
 
         try {
             String uid = user.getUid();
