@@ -73,6 +73,10 @@
                             <span class="stat-value" th:text="${user.primaryLanguage != null ? user.primaryLanguage : 'english'}">english</span>
                             <span class="stat-label">학습 언어</span>
                         </div>
+                        <div class="stat">
+                                <span class="stat-value" th:text="${score}"> 0</span>
+                                <span class="stat-label">레벨</span>
+                        </div>                        
                     </div>
                 </div>
                 <button class="btn btn-secondary edit-profile-btn" onclick="showModal()">
