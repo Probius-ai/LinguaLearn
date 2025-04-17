@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${profileUser.displayName + ' 님의 프로필 - LinguaLearn'}">사용자 프로필 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/profile.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+
+    <style>
+        .friend-action-btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .add-friend-btn {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .add-friend-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .pending-btn {
+            background-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .remove-friend-btn {
+            background-color: var(--error);
+            color: white;
+        }
+
+        .remove-friend-btn:hover {
+            background-color: #c82333;
+        }
+
+        .friend-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 0.7rem 1.2rem;
+            font-size: 0.9rem;
+        }
+
+        .friend-status i {
+            color: var(--success);
+        }
+
+        .back-button {
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .back-button:hover {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 영역 -->
+<header class="header">
+    <div class="container header-container">
+        <div class="logo">
+            <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a th:href="@{/}">홈</a></li>
+                <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                <li><a th:href="@{/ai/translate}">번역 도구</a></li>
+                <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
+                <li><a th:href="@{/ai/sentence-test}">문장 테스트</a></li>
+                <li><a th:href="@{/wrong-sentences}">오답 노트</a></li>
+                <li><a th:href="@{/ranking}">랭킹</a></li>
+                <li><a th:href="@{/friends}">친구</a></li>
+            </ul>
+        </nav>
+        <div class="user-actions">
+            <div class="theme-switcher">
+                <button id="theme-toggle" aria-label="테마 변경">
+                    <i class="fas fa-sun light-icon"></i>
+                    <i class="fas fa-moon dark-icon"></i>
+                </button>
+                <div class="theme-dropdown">
+                    <button data-theme="light">Light</button>
+                    <button data-theme="dark">Dark</button>
+                    <button data-theme="blue">Blue</button>
+                    <button data-theme="green">Green</button>
+                </div>
+            </div>
+
+            <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+            <div class="user-logged-in">
+                <a th:href="@{/profile}" class="profile-link" title="프로필 보기">
+                    <div class="avatar" th:text="${#strings.substring(currentUser.displayName, 0, 1)}">U</div>
+                </a>
+                <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- 메인 컨텐츠 -->
+<main class="profile-main">
+    <div class="container">
+        <a th:href="@{/friends}" class="back-button">
+            <i class="fas fa-arrow-left"></i> 친구 목록으로 돌아가기
+        </a>
+
+        <div class="profile-header">
+            <div class="profile-cover"></div>
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <div class="avatar large" th:text="${#strings.substring(profileUser.displayName, 0, 1)}">U</div>
+                </div>
+                <div class="profile-details">
+                    <h1 th:text="${profileUser.displayName}">사용자 이름</h1>
+                    <p class="user-email" th:text="${profileUser.email}">user@example.com</p>
+                    <div class="user-stats">
+                        <div class="stat">
+                            <span class="stat-value" th:text="${profileUser.dailyGoal != null ? profileUser.dailyGoal : 15}">15</span>
+                            <span class="stat-label">일일 학습 목표(분)</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value" th:text="${profileUser.primaryLanguage != null ? profileUser.primaryLanguage : 'english'}">english</span>
+                            <span class="stat-label">학습 언어</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 친구 관계에 따라 다른 버튼 표시 -->
+                <div th:if="${areFriends}" class="friend-status">
+                    <i class="fas fa-user-check"></i> 친구
+                </div>
+
+                <button th:unless="${areFriends}" class="friend-action-btn add-friend-btn" id="add-friend-btn" th:data-id="${profileUser.uid}">
+                    <i class="fas fa-user-plus"></i> 친구 추가
+                </button>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="stats">학습 통계</button>
+                <button class="tab-btn" data-tab="achievements">업적</button>
+            </div>
+
+            <div class="tab-content active" id="stats-tab">
+                <h2>학습 통계</h2>
+                <div class="stats-overview">
+                    <div class="learning-stats">
+                        <h3>학습 현황</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>총 점수</h3>
+                                    <div class="stat-value">243</div>
+                                    <div class="stat-change positive">
+                                        <i class="fas fa-arrow-up"></i> 15% 증가
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>학습 일수</h3>
+                                    <div class="stat-value">14</div>
+                                    <div class="stat-change positive">
+                                        <i class="fas fa-arrow-up"></i> 연속 5일
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>정답률</h3>
+                                    <div class="stat-value">78%</div>
+                                    <div class="stat-change positive">
+                                        <i class="fas fa-arrow-up"></i> 3% 증가
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>학습한 단어</h3>
+                                    <div class="stat-value">157</div>
+                                    <div class="stat-change positive">
+                                        <i class="fas fa-arrow-up"></i> 24단어 추가
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="achievements-tab">
+                <h2>업적</h2>
+                <div class="recent-achievements">
+                    <h3>최근 획득 업적</h3>
+                    <div class="achievements-list">
+                        <div class="achievement-item">
+                            <div class="achievement-icon streak">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="achievement-details">
+                                <h3>학습 열정</h3>
+                                <p>5일 연속 학습 완료</p>
+                                <div class="achievement-date">2025년 4월 15일</div>
+                            </div>
+                        </div>
+                        <div class="achievement-item">
+                            <div class="achievement-icon quiz">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="achievement-details">
+                                <h3>퀴즈 마스터</h3>
+                                <p>그림 단어 퀴즈 100% 정답</p>
+                                <div class="achievement-date">2025년 4월 12일</div>
+                            </div>
+                        </div>
+                        <div class="achievement-item">
+                            <div class="achievement-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="achievement-details">
+                                <h3>어휘 확장</h3>
+                                <p>100개 단어 학습 완료</p>
+                                <div class="achievement-date">2025년 4월 10일</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 푸터 -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                <p>언어를 배우는 새로운 방법</p>
+            </div>
+            <div class="footer-links">
+                <div class="link-group">
+                    <h3>기능</h3>
+                    <ul>
+                        <li><a href="#">그림 단어 퀴즈</a></li>
+                        <li><a href="#">문장 번역</a></li>
+                        <li><a href="#">일일 추천 단어</a></li>
+                    </ul>
+                </div>
+                <div class="link-group">
+                    <h3>회사</h3>
+                    <ul>
+                        <li><a href="#">소개</a></li>
+                        <li><a href="#">연락처</a></li>
+                        <li><a href="#">자주 묻는 질문</a></li>
+                    </ul>
+                </div>
+                <div class="link-group">
+                    <h3>법적 정보</h3>
+                    <ul>
+                        <li><a href="#">이용약관</a></li>
+                        <li><a href="#">개인정보처리방침</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Firebase 스크립트 -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script th:src="@{/js/firebase-auth-main.js}" defer></script>
+<script th:src="@{/js/profile.js}" defer></script>
+
+<!-- 프로필 뷰 스크립트 -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 탭 전환 기능
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // 활성 탭 변경
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // 해당 콘텐츠 표시
+                const tabId = this.getAttribute('data-tab');
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === tabId + '-tab') {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // 친구 추가 버튼
+        const addFriendBtn = document.getElementById('add-friend-btn');
+        if (addFriendBtn) {
+            addFriendBtn.addEventListener('click', function() {
+                const friendId = this.getAttribute('data-id');
+                this.disabled = true;
+                this.textContent = '요청 중...';
+
+                // 친구 요청 보내기
+                fetch('/api/friends/request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ friendId: friendId })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Request failed');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 버튼 상태 변경
+                        addFriendBtn.textContent = '친구 요청 중...';
+                        addFriendBtn.className = 'friend-action-btn pending-btn';
+                    })
+                    .catch(error => {
+                        console.error('Error sending friend request:', error);
+                        addFriendBtn.disabled = false;
+                        addFriendBtn.innerHTML = '<i class="fas fa-user-plus"></i> 친구 추가';
+                        alert('친구 요청을 보내는 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    });
+            });
+        }
+    });
+</script>
+</body>
+</html>

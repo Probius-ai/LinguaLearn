@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:data-theme="${session.theme != null ? session.theme : 'light'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>친구 목록 - LinguaLearn</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}" defer></script>
+
+    <style>
+        .friends-container {
+            max-width: 900px;
+            margin: 2rem auto 4rem;
+        }
+
+        .section-description {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            color: var(--text-secondary);
+        }
+
+        .friends-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .friends-tab {
+            padding: 0.8rem 1.2rem;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .friends-tab.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-section {
+            margin-bottom: 2rem;
+        }
+
+        .search-wrapper {
+            display: flex;
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background-color: transparent;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+        }
+
+        .search-button {
+            padding: 0 1.5rem;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color 0.3s;
+        }
+
+        .search-button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .search-results {
+            margin-top: 1.5rem;
+        }
+
+        .search-result-item {
+            background-color: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+
+        .search-result-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .user-details h3 {
+            margin: 0 0 0.3rem;
+            font-size: 1.1rem;
+        }
+
+        .user-details p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .user-actions button {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-friend-btn {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .add-friend-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .pending-btn {
+            background-color: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .friends-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .friend-card {
+            background-color: var(--bg-secondary);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: transform 0.3s;
+        }
+
+        .friend-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .friend-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .friend-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .friend-info h3 {
+            margin: 0 0 0.3rem;
+            font-size: 1.2rem;
+        }
+
+        .friend-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .friend-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+        }
+
+        .friend-actions button {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .remove-friend-btn {
+            background-color: var(--error);
+            color: white;
+        }
+
+        .remove-friend-btn:hover {
+            background-color: #c82333;
+        }
+
+        .view-profile-btn {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .view-profile-btn:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .friend-request {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px var(--shadow);
+            transition: transform 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .friend-request:hover {
+            transform: translateY(-3px);
+        }
+
+        .request-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .request-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .request-details h3 {
+            margin: 0 0 0.3rem;
+            font-size: 1.1rem;
+        }
+
+        .request-details p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .accept-btn {
+            background-color: var(--success);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .accept-btn:hover {
+            background-color: #218838;
+        }
+
+        .reject-btn {
+            background-color: var(--error);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .reject-btn:hover {
+            background-color: #c82333;
+        }
+
+        .loading-spinner {
+            display: none;
+            margin: 2rem auto;
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--gray-200);
+            border-top: 5px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 1.5rem;
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--error);
+            border-radius: 10px;
+            margin: 1rem 0;
+            border-left: 4px solid var(--error);
+        }
+
+        .notification-badge {
+            background-color: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 영역 -->
+<header class="header">
+    <div class="container header-container">
+        <div class="logo">
+            <h1><a th:href="@{/}"><i class="fas fa-language"></i> LinguaLearn</a></h1>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a th:href="@{/}">홈</a></li>
+                <li><a th:href="@{/quiz}">단어 퀴즈</a></li>
+                <li><a th:href="@{/ai/translate}">번역 도구</a></li>
+                <li><a th:href="@{/ai/daily-word}">추천 단어</a></li>
+                <li><a th:href="@{/ai/sentence-test}">문장 테스트</a></li>
+                <li><a th:href="@{/wrong-sentences}">오답 노트</a></li>
+                <li><a th:href="@{/ranking}">랭킹</a></li>
+                <li><a th:href="@{/friends}" class="active">친구</a></li>
+            </ul>
+        </nav>
+        <div class="user-actions">
+            <div class="theme-switcher">
+                <button id="theme-toggle" aria-label="테마 변경">
+                    <i class="fas fa-sun light-icon"></i>
+                    <i class="fas fa-moon dark-icon"></i>
+                </button>
+                <div class="theme-dropdown">
+                    <button data-theme="light">Light</button>
+                    <button data-theme="dark">Dark</button>
+                    <button data-theme="blue">Blue</button>
+                    <button data-theme="green">Green</button>
+                </div>
+            </div>
+
+            <!-- 로그인한 상태일 때 프로필 링크와 로그아웃 버튼 표시 -->
+            <div class="user-logged-in">
+                <a th:href="@{/profile}" class="profile-link" title="프로필 보기">
+                    <div class="avatar" th:text="${#strings.substring(session.user.displayName, 0, 1)}">U</div>
+                </a>
+                <button class="btn logout-btn" id="logout-btn">로그아웃</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- 메인 컨텐츠 영역 -->
+<main>
+    <div class="container friends-container">
+        <h1 class="section-title">친구 관리</h1>
+        <p class="section-description">학습을 함께할 친구를 찾고 관리하세요. 친구들의 랭킹 및 학습 진행 상황을 확인할 수 있습니다.</p>
+
+        <div class="friends-tabs">
+            <div class="friends-tab active" data-tab="search-tab">친구 찾기</div>
+            <div class="friends-tab" data-tab="friends-tab">내 친구 목록</div>
+            <div class="friends-tab" data-tab="requests-tab">친구 요청 <span id="request-count" class="notification-badge" style="display: none;">0</span></div>
+        </div>
+
+        <!-- 친구 찾기 탭 -->
+        <div id="search-tab" class="tab-content active">
+            <div class="search-section">
+                <div class="search-wrapper">
+                    <input type="text" id="user-search" class="search-input" placeholder="사용자 이름 또는 이메일로 검색...">
+                    <button id="search-btn" class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
+                <!-- 검색 결과 -->
+                <div id="search-results" class="search-results"></div>
+
+                <!-- 로딩 표시 -->
+                <div id="search-loading" class="loading-spinner"></div>
+
+                <!-- 검색 결과 없음 메시지 -->
+                <div id="no-results" class="empty-state" style="display: none;">
+                    <i class="fas fa-search"></i>
+                    <h3>검색 결과가 없습니다</h3>
+                    <p>다른 검색어를 입력해보세요.</p>
+                </div>
+
+                <!-- 오류 메시지 -->
+                <div id="search-error" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 친구 목록 탭 -->
+        <div id="friends-tab" class="tab-content">
+            <div id="friends-list" class="friends-list">
+                <!-- 친구 목록이 여기에 동적으로 추가됩니다 -->
+            </div>
+
+            <!-- 로딩 표시 -->
+            <div id="friends-loading" class="loading-spinner"></div>
+
+            <!-- 친구 없음 메시지 -->
+            <div id="no-friends" class="empty-state" style="display: none;">
+                <i class="fas fa-user-friends"></i>
+                <h3>아직 친구가 없습니다</h3>
+                <p>친구를 추가하면 여기에 표시됩니다.</p>
+                <button class="btn btn-primary switch-tab" data-tab="search-tab">친구 찾기</button>
+            </div>
+
+            <!-- 오류 메시지 -->
+            <div id="friends-error" class="error-message" style="display: none;"></div>
+        </div>
+
+        <!-- 친구 요청 탭 -->
+        <div id="requests-tab" class="tab-content">
+            <div id="friend-requests">
+                <!-- 친구 요청 목록이 여기에 동적으로 추가됩니다 -->
+            </div>
+
+            <!-- 로딩 표시 -->
+            <div id="requests-loading" class="loading-spinner"></div>
+
+            <!-- 요청 없음 메시지 -->
+            <div id="no-requests" class="empty-state" style="display: none;">
+                <i class="fas fa-envelope-open"></i>
+                <h3>친구 요청이 없습니다</h3>
+                <p>새로운 친구 요청이 도착하면 여기에 표시됩니다.</p>
+            </div>
+
+            <!-- 오류 메시지 -->
+            <div id="requests-error" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+</main>
+
+<!-- 푸터 영역 -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <h2><i class="fas fa-language"></i> LinguaLearn</h2>
+                <p>언어를 배우는 새로운 방법</p>
+            </div>
+            <div class="footer-links">
+                <div class="link-group">
+                    <h3>기능</h3>
+                    <ul>
+                        <li><a th:href="@{/quiz/image}">그림 단어 퀴즈</a></li>
+                        <li><a th:href="@{/ai/translate}">문장 번역</a></li>
+                        <li><a th:href="@{/ai/daily-word}">일일 추천 단어</a></li>
+                    </ul>
+                </div>
+                <div class="link-group">
+                    <h3>회사</h3>
+                    <ul>
+                        <li><a href="#">소개</a></li>
+                        <li><a href="#">연락처</a></li>
+                        <li><a href="#">자주 묻는 질문</a></li>
+                    </ul>
+                </div>
+                <div class="link-group">
+                    <h3>법적 정보</h3>
+                    <ul>
+                        <li><a href="#">이용약관</a></li>
+                        <li><a href="#">개인정보처리방침</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 LinguaLearn. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Firebase 스크립트 -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script th:src="@{/js/firebase-auth-main.js}" defer></script>
+
+<!-- 친구 관리 스크립트 -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // DOM 요소
+        const friendsTabs = document.querySelectorAll('.friends-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const userSearchInput = document.getElementById('user-search');
+        const searchButton = document.getElementById('search-btn');
+        const searchResults = document.getElementById('search-results');
+        const searchLoading = document.getElementById('search-loading');
+        const noResults = document.getElementById('no-results');
+        const searchError = document.getElementById('search-error');
+        const friendsList = document.getElementById('friends-list');
+        const friendsLoading = document.getElementById('friends-loading');
+        const noFriends = document.getElementById('no-friends');
+        const friendsError = document.getElementById('friends-error');
+        const friendRequests = document.getElementById('friend-requests');
+        const requestsLoading = document.getElementById('requests-loading');
+        const noRequests = document.getElementById('no-requests');
+        const requestsError = document.getElementById('requests-error');
+        const requestCount = document.getElementById('request-count');
+        const switchTabButtons = document.querySelectorAll('.switch-tab');
+
+        // 탭 전환 함수
+        function switchTab(tabId) {
+            friendsTabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+
+            // 탭 전환 시 데이터 로드
+            if (tabId === 'friends-tab') {
+                loadFriends();
+            } else if (tabId === 'requests-tab') {
+                loadFriendRequests();
+            }
+        }
+
+        // 탭 클릭 이벤트 리스너
+        friendsTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                switchTab(tabId);
+            });
+        });
+
+        // '친구 찾기' 버튼 리스너
+        switchTabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                switchTab(tabId);
+            });
+        });
+
+        function loadFriendRequests() {
+            // API 호출
+            fetch('/api/friends/requests')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    requestsLoading.style.display = 'none';
+                    if (!data.requests || data.requests.length === 0) {
+                        // 요청 없는 경우 처리
+                        return;
+                    }
+                    // 친구 요청 목록 표시
+                    data.requests.forEach(request => {
+                        const requestUser = request.sender; // 필드 이름을 'sender'로 수정
+                        const userInitial = requestUser.displayName ? requestUser.displayName.charAt(0).toUpperCase() : '?';
+                        const requestCard = document.createElement('div');
+                        requestCard.className = 'friend-request';
+                        requestCard.innerHTML = `
+                    <div class="request-info">
+                        <div class="request-avatar">${userInitial}</div>
+                        <div class="request-details">
+                            <h3>${requestUser.displayName || '이름 없음'}</h3>
+                            <p>${requestUser.email || ''}</p>
+                        </div>
+                    </div>
+                    <div class="request-actions">
+                        <button class="accept-btn" data-id="${request.id}" onclick="acceptFriendRequest('${request.id}', this)">수락</button>
+                        <button class="reject-btn" data-id="${request.id}" onclick="rejectFriendRequest('${request.id}', this)">거절</button>
+                    </div>
+                `;
+                        friendRequests.appendChild(requestCard);
+                    });
+                })
+                .catch(error => {
+                    requestsLoading.style.display = 'none';
+                    requestsError.textContent = error.message;
+                    requestsError.style.display = 'block';
+                });
+        }
+
+        // 초기 데이터 로드
+        loadFriends();
+        loadFriendRequests();
+
+        // 사용자 검색
+        searchButton.addEventListener('click', searchUsers);
+        userSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchUsers();
+            }
+        });
+
+        // 사용자 검색 함수
+        function searchUsers() {
+            const query = userSearchInput.value.trim();
+            if (!query) {
+                searchError.textContent = '검색어를 입력해주세요.';
+                searchError.style.display = 'block';
+                return;
+            }
+
+            // 화면 초기화
+            searchResults.innerHTML = '';
+            searchError.style.display = 'none';
+            noResults.style.display = 'none';
+            searchLoading.style.display = 'block';
+
+            // API 호출
+            fetch(`/api/friends/search?query=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Search request failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    searchLoading.style.display = 'none';
+
+                    if (!data.results || data.results.length === 0) {
+                        noResults.style.display = 'block';
+                        return;
+                    }
+
+                    // 검색 결과 표시
+                    data.results.forEach(user => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'search-result-item';
+
+                        const userInitial = user.displayName ? user.displayName.charAt(0).toUpperCase() : '?';
+
+                        let actionButton = '';
+                        if (user.friendRequestStatus === 'accepted') {
+                            actionButton = '<button class="pending-btn" disabled>이미 친구입니다</button>';
+                        } else if (user.friendRequestStatus === 'pending') {
+                            if (user.friendRequestId) {
+                                actionButton = '<button class="pending-btn" disabled>친구 요청 중...</button>';
+                            }
+                        } else {
+                            actionButton = `<button class="add-friend-btn" data-id="${user.uid}">친구 추가</button>`;
+                        }
+
+                        resultItem.innerHTML = `
+                                <div class="user-info">
+                                    <div class="user-avatar">${userInitial}</div>
+                                    <div class="user-details">
+                                        <h3>${user.displayName || '이름 없음'}</h3>
+                                        <p>${user.email || ''}</p>
+                                    </div>
+                                </div>
+                                <div class="user-actions">
+                                    ${actionButton}
+                                </div>
+                            `;
+
+                        searchResults.appendChild(resultItem);
+                    });
+
+                    // 친구 추가 버튼 이벤트 리스너
+                    document.querySelectorAll('.add-friend-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const friendId = this.getAttribute('data-id');
+                            sendFriendRequest(friendId, this);
+                        });
+                    });
+                })
+                .catch(error => {
+                    searchLoading.style.display = 'none';
+                    searchError.textContent = '사용자 검색 중 오류가 발생했습니다. 다시 시도해주세요.';
+                    searchError.style.display = 'block';
+                    console.error('Search error:', error);
+                });
+        }
+
+        // 친구 요청 보내기 함수
+        function sendFriendRequest(friendId, button) {
+            button.disabled = true;
+            button.textContent = '요청 중...';
+
+            // API 호출
+            fetch('/api/friends/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ friendId: friendId })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    button.textContent = '친구 요청 중...';
+                    button.className = 'pending-btn';
+                })
+                .catch(error => {
+                    button.disabled = false;
+                    button.textContent = '친구 추가';
+                    alert('친구 요청을 보내는 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    console.error('Friend request error:', error);
+                });
+        }
+
+        // 친구 목록 로드 함수
+        function loadFriends() {
+            // 화면 초기화
+            friendsList.innerHTML = '';
+            friendsError.style.display = 'none';
+            noFriends.style.display = 'none';
+            friendsLoading.style.display = 'block';
+
+            // API 호출
+            fetch('/api/friends')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    friendsLoading.style.display = 'none';
+
+                    if (!data.friends || data.friends.length === 0) {
+                        noFriends.style.display = 'block';
+                        return;
+                    }
+
+                    // 친구 목록 표시
+                    data.friends.forEach(friend => {
+                        const friendUser = friend.user;
+                        const userInitial = friendUser.displayName ? friendUser.displayName.charAt(0).toUpperCase() : '?';
+
+                        const friendCard = document.createElement('div');
+                        friendCard.className = 'friend-card';
+                        friendCard.innerHTML = `
+                                <div class="friend-header">
+                                    <div class="friend-avatar">${userInitial}</div>
+                                    <div class="friend-info">
+                                        <h3>${friendUser.displayName || '이름 없음'}</h3>
+                                        <p>${friendUser.email || ''}</p>
+                                    </div>
+                                </div>
+                        <div class="friend-actions">
+                            <button class="view-profile-btn" onclick="location.href='/profile/view/${friendUser.uid}'">프로필 보기</button>
+                            <button class="remove-friend-btn" data-id="${friend.id}" onclick="removeFriend('${friend.id}', this)">친구 삭제</button>
+                        </div>
+                    `;
+                        friendsList.appendChild(friendCard);
+                    });
+                })
+                .catch(error => {
+                    friendsLoading.style.display = 'none';
+                    friendsError.textContent = error.message;
+                    friendsError.style.display = 'block';
+                });
+        }
+        // 친구 삭제 함수
+        function removeFriend(friendshipId, button) {
+            if (!confirm('정말 친구를 삭제하시겠습니까?')) {
+                return;
+            }
+            button.disabled = true;
+            fetch(`/api/friends/${friendshipId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('친구 삭제에 실패하였습니다.');
+                    }
+                    // DOM에서 해당 친구 카드 제거
+                    const friendCard = button.closest('.friend-card');
+                    friendCard.remove();
+                })
+                .catch(error => {
+                    alert(error.message);
+                    button.disabled = false;
+                });
+        }
+
+        // 로드 시 친구 목록 갱신
+        loadFriends();
+    });
+</script>
+</body>
+</html>
