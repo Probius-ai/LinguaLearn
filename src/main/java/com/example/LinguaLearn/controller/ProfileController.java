@@ -2,6 +2,7 @@ package com.example.LinguaLearn.controller;
 
 import com.example.LinguaLearn.model.User;
 import com.example.LinguaLearn.service.UserService;
+import com.example.LinguaLearn.service.FirestoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ public class ProfileController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private FirestoreService firestoreService;
 
 @GetMapping
     public String showProfile(Model model, HttpSession session) throws ExecutionException, InterruptedException {
