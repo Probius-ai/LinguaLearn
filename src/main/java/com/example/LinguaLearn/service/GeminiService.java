@@ -160,8 +160,9 @@ public class GeminiService {
 
     public String analyzeLearningProgress(List<String> correctSentences, List<String> wrongSentences) {
         StringBuilder promptBuilder = new StringBuilder();
-        promptBuilder.append("Based on a language learner's performance, provide a brief analysis and improvement tips. ");
-        
+        promptBuilder.append("Based on a language learner's performance, provide a brief analysis and improvement tips in Korean. ");
+        promptBuilder.append("Write your response only in Korean.");
+
         promptBuilder.append("Correctly translated sentences: ");
         promptBuilder.append(String.join(", ", correctSentences));
         promptBuilder.append(". ");
@@ -170,7 +171,7 @@ public class GeminiService {
         promptBuilder.append(String.join(", ", wrongSentences));
         promptBuilder.append(". ");
         
-        promptBuilder.append("Keep the analysis concise and focused on actionable advice.");
+        promptBuilder.append("Keep the analysis concise and focused on actionable advice");
         
         return getContents(promptBuilder.toString());
     }
