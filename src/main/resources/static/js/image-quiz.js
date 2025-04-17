@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let quizCounter = 0;
     let score = 0;
     let isAnswered = false;
+    let usedWords = new Set(); // 이미 사용된 단어 추적
+    let retryCount = 0;        // 중복 단어 재시도 카운터
+    const maxRetries = 5;      // 최대 재시도 횟수
 
     // 요소 참조
     const languageSelect = document.getElementById('language-select');
@@ -46,6 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
         currentLevel = level;
         quizCounter = 0;
         score = 0;
+        usedWords.clear(); // 중복방지 단어목록 초기화
+
         levelSelect.style.display = 'none';
         loadingArea.style.display = 'flex';
 
@@ -69,8 +74,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadNextQuestion() {
         // 퀴즈 섹션 초기화
         resetQuizState();
+        loadingArea.style.display = 'flex';
+        quizSection.style.display = 'none';
+        retryCount = 0; // 재시도 카운터 리셋
 
         // API에서 문제 가져오기
+        fetchNewQuestion();
+    }
+
+    function fetchNewQuestion() {
         fetch(`/api/quiz/image?language=${currentLanguage}&level=${currentLevel}`)
             .then(response => {
                 if (!response.ok) {
@@ -79,9 +91,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
+                // 이미 중복된 단어인지 확인
+                if (usedWords.has(data.answer) && retryCount < maxRetries) {
+                    // 중복된 단어면 다시 시도
+                    retryCount++;
+                    fetchNewQuestion();
+                    return;
+                }
+
                 // 로딩 숨기기, 퀴즈 섹션 표시
                 loadingArea.style.display = 'none';
                 quizSection.style.display = 'block';
+
+                // 단어를 중복 목록에 추가
+                usedWords.add(data.answer);
 
                 // 문제 데이터 설정
                 displayQuestion(data);
