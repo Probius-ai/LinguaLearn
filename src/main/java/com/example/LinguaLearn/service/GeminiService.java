@@ -22,7 +22,6 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 
-@Slf4j
 @Service
 public class GeminiService {
 
