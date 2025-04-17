@@ -114,4 +114,13 @@ public class FirestoreService {
 
         return sentences;
     }
+    public int getLevel(String uid) throws ExecutionException, InterruptedException {
+        DocumentSnapshot snapshot = firestoreRepository.getProgress(uid);
+        Long scoreLong = snapshot.getLong("total_score");       // Long으로 직접 받아오기
+        int score = (scoreLong != null ? scoreLong.intValue() : 0);
+        logger.info("Score {}", score);
+        int level = score / 10;
+        logger.info("Level {}", level);
+        return level;
+    }
 }
