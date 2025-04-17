@@ -115,6 +115,7 @@ public class GeminiController {
         }
 
         try {
+            logger.info("try block 실행");
             String language = "english"; // Default language
             String level = "beginner";   // Default level
 
@@ -122,8 +123,9 @@ public class GeminiController {
             if (user.getPrimaryLanguage() != null) {
                 language = user.getPrimaryLanguage();
             }
-
+            logger.info("service 실행");
             String testSentence = geminiService.generateSentenceForTest(language, level);
+            logger.info("service 실행 완료 : {}", testSentence);
             model.addAttribute("testSentence", testSentence);
             model.addAttribute("language", language);
             model.addAttribute("level", level);
@@ -137,7 +139,6 @@ public class GeminiController {
             model.addAttribute("loginPrompt", false); // Explicitly set
             model.addAttribute("isRetry", false); // Explicitly set
         }
-
         return "sentence-test";
     }
 
@@ -234,11 +235,13 @@ public class GeminiController {
             if (evaluationResult.contains(" ")) {
                 explanation = evaluationResult.substring(evaluationResult.indexOf(" ")).trim();
             }
-
+            logger.info("targetLanguage : {}", targetLanguage);
+            String nextSentence = geminiService.generateSentenceForTest(targetLanguage, "beginner");
+            logger.info("nextSentence : {}", nextSentence);
             Map<String, Object> response = new HashMap<>();
             response.put("correct", isCorrect);
             response.put("explanation", explanation);
-            response.put("nextSentence", geminiService.generateSentenceForTest(targetLanguage, "beginner"));
+            response.put("nextSentence", nextSentence);
 
             return ResponseEntity.ok(response);
 
