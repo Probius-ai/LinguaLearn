@@ -164,11 +164,11 @@ public class GeminiController {
         try {
             // Use Gemini to check the translation quality
             String prompt = String.format(
-                    "Evaluate if this translation from English to %s is correct: " +
+                    "Evaluate if this translation from English to Korean is correct: " +
                             "Original: \"%s\", Translation: \"%s\". " +
                             "Respond with just one of these words: CORRECT or INCORRECT, " +
                             "followed by a brief explanation of no more than 20 words.",
-                    targetLanguage, originalSentence, userTranslation
+                    originalSentence, userTranslation
             );
 
             String evaluationResult = geminiService.getContents(prompt);
