@@ -22,6 +22,7 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 
+@Slf4j
 @Service
 public class GeminiService {
 
@@ -149,6 +150,8 @@ public class GeminiService {
         String prompt = String.format(
             "Generate one simple %s sentence for %s level language learners. " +
             "The sentence should be about daily life and suitable for a translation exercise. " +
+                    "Please vary the topic and vocabulary each time to avoid repetition. " +
+                    "Use different contexts (e.g., hobbies, work, food, travel). " +
             "Provide only the sentence with no additional explanation.",
             language, level
         );

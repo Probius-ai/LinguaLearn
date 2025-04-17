@@ -22,8 +22,8 @@ public class ProfileController {
     @Autowired
     private UserService userService;
 
-    @GetMapping
-    public String showProfile(Model model, HttpSession session) {
+@GetMapping
+    public String showProfile(Model model, HttpSession session) throws ExecutionException, InterruptedException {
         logger.info("start profile");
         User user = (User) session.getAttribute("user");
         if (user == null) {
@@ -31,8 +31,10 @@ public class ProfileController {
         }
         logger.info("Fetching user profile for UID: {}", user.getUid());
         logger.info("Fetching user profile for name: {}", user.getDisplayName());
-
+        int level = firestoreService.getLevel(user.getUid());
+        logger.info("Level {}", level);
         model.addAttribute("user", user);
+        model.addAttribute("score", level);
         return "profile-page";
     }
 
