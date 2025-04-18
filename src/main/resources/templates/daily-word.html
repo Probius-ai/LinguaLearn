@@ -31,25 +31,24 @@
                 
                 <div class="word-main">
                     <div class="word-info">
-                        <h2 class="word-text" th:text="${wordData.word}">Serendipity</h2>
-                        <p class="pronunciation" th:text="${wordData.pronunciation}">[ˌserənˈdɪpəti]</p>
-                        <p class="translation" th:text="${wordData.translation}">우연한 행운</p>
-                        <p class="part-of-speech" th:text="${wordData.partOfSpeech}">명사</p>
+                        <h2 class="word-text" th:text="${wordData['word']}">Serendipity</h2>
+                        <p class="pronunciation" th:text="${wordData['pronunciation']}">[ˌserənˈdɪpəti]</p>
+                        <p class="translation" th:text="${wordData['translation']}">우연한 행운</p>
+                        <p class="part-of-speech" th:text="${wordData['partOfSpeech']}">명사</p>
                     </div>
                     
-                    <button class="play-button" id="pronounce-button" th:attr="data-word=${wordData.word}">
+                    <button class="play-button" id="pronounce-button" th:attr="data-word=${wordData['word']}">
                         <i class="fas fa-volume-up"></i>
                     </button>
                 </div>
                 
                 <div class="example-section">
                     <h3>예문</h3>
-                    <p class="example-sentence" th:text="${wordData.exampleSentence}">
+                    <p class="example-sentence" th:text="${wordData['exampleSentence']}">
                         Finding that rare book in a small shop was pure serendipity.
                     </p>
-                    <p class="sentence-translation">
-                        작은 상점에서 그 희귀한 책을 발견한 것은 순전한 우연의 행운이었다.
-                    </p>
+                    <!-- Assuming you might have a translation for the example sentence in the map -->
+                    <!-- <p class="sentence-translation" th:text="${wordData['exampleSentenceTranslation']}">...</p> -->
                 </div>
                 
                 <div class="word-actions">

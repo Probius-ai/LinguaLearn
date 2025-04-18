@@ -17,6 +17,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException; // Added import
+import com.fasterxml.jackson.core.type.TypeReference; // Added import
+import com.fasterxml.jackson.databind.ObjectMapper; // Added import
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -28,6 +31,7 @@ public class GeminiService {
     private static final Logger logger = LoggerFactory.getLogger(GeminiService.class);
     private final RestTemplate restTemplate;
     private final Firestore firestore;
+    private final ObjectMapper objectMapper; // Added ObjectMapper
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -36,9 +40,10 @@ public class GeminiService {
     private String apiUrl;
 
     @Autowired
-    public GeminiService(RestTemplate restTemplate, Firestore firestore) {
+    public GeminiService(RestTemplate restTemplate, Firestore firestore, ObjectMapper objectMapper) { // Inject ObjectMapper
         this.restTemplate = restTemplate;
         this.firestore = firestore;
+        this.objectMapper = objectMapper; // Assign ObjectMapper
     }
 
     public String getContents(String prompt) {
@@ -83,56 +88,56 @@ public class GeminiService {
     }
 
     public Map<String, String> getTodayWord(String language, String level) {
-        // Get today's date in YYYY-MM-DD format
         String todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
+        String docId = todayDate + "_" + language + "_" + level;
+        DocumentReference docRef = firestore.collection("daily_words").document(docId);
+
+        String prompt = String.format(
+            "Give me a %s level %s word that is useful for language learners. " +
+            "Respond ONLY with a valid JSON object containing these fields: " +
+            "\"word\", \"translation\" (in Korean), \"pronunciation\", \"partOfSpeech\", \"exampleSentence\". " +
+            "Do not include any text before or after the JSON object, and do not use markdown formatting like ```json.",
+            level, language
+        );
         
         try {
-            // Check if today's word is already in Firestore
-            DocumentReference docRef = firestore
-                .collection("daily_words")
-                .document(todayDate + "_" + language + "_" + level);
-                
             ApiFuture<DocumentSnapshot> future = docRef.get();
             DocumentSnapshot document = future.get();
-            
-            // If today's word exists, return it
+
             if (document.exists()) {
                 Map<String, Object> data = document.getData();
+                // Convert Firestore data (Map<String, Object>) to Map<String, String>
                 Map<String, String> wordData = new HashMap<>();
-                wordData.put("word", (String) data.get("word"));
-                wordData.put("translation", (String) data.get("translation"));
-                wordData.put("pronunciation", (String) data.get("pronunciation"));
-                wordData.put("exampleSentence", (String) data.get("exampleSentence"));
-                wordData.put("partOfSpeech", (String) data.get("partOfSpeech"));
-                
+                if (data != null) {
+                    data.forEach((key, value) -> wordData.put(key, value != null ? value.toString() : null));
+                }
                 logger.info("Retrieved today's word from Firestore: {}", wordData.get("word"));
                 return wordData;
             }
-            
-            // If not, generate a new word with Gemini API
-            String prompt = String.format(
-                "Give me a %s level %s word that is useful for language learners. " +
-                "Respond in JSON format with these fields: word, translation (in Korean), " +
-                "pronunciation, partOfSpeech, exampleSentence. " +
-                "Just provide the JSON with no other text.",
-                level, language
-            );
-            
-            String response = getContents(prompt);
-            logger.info("Gemini API response for today's word: {}", response);
-            
-            // Parse the response and extract word details
-            // This is a simplified parsing. In production, use a JSON parser.
-            Map<String, String> wordData = parseJsonResponse(response);
-            
+
+            String responseJson = getContents(prompt);
+            // Clean potential markdown fences if the LLM still adds them
+            responseJson = responseJson.trim().replaceFirst("^```json", "").replaceFirst("```$", "").trim();
+            logger.info("Gemini API response for today's word (raw): {}", responseJson);
+
+            // Use ObjectMapper to parse the JSON response
+            Map<String, String> wordData = objectMapper.readValue(responseJson, new TypeReference<Map<String, String>>() {});
+
             // Store in Firestore
-            docRef.set(wordData);
+            docRef.set(wordData); // Storing Map<String, String> directly
             logger.info("Stored new word in Firestore: {}", wordData.get("word"));
-            
+
             return wordData;
+
         } catch (InterruptedException | ExecutionException e) {
-            logger.error("Error getting today's word", e);
-            throw new RuntimeException("Error retrieving today's word", e);
+            logger.error("Error interacting with Firestore for docId: {}", docId, e);
+            throw new RuntimeException("Error retrieving today's word from Firestore", e);
+        } catch (JsonProcessingException e) {
+            logger.error("Error parsing JSON response from Gemini API for docId: {}. Response: {}", docId, getContents(prompt), e); // Log the raw response on error
+            throw new RuntimeException("Error parsing today's word data from AI service", e);
+        } catch (Exception e) { // Catch other potential exceptions
+            logger.error("Unexpected error getting today's word for docId: {}", docId, e);
+            throw new RuntimeException("Unexpected error retrieving today's word", e);
         }
     }
 
@@ -175,31 +180,4 @@ public class GeminiService {
         
         return getContents(promptBuilder.toString());
     }
-    
-    // Helper method to parse JSON response from Gemini API
-    private Map<String, String> parseJsonResponse(String jsonString) {
-        Map<String, String> result = new HashMap<>();
-        
-        // Very simple JSON parsing for demonstration
-        // In production, use a proper JSON parser
-        jsonString = jsonString.replaceAll("[{}\"]", "");
-        String[] pairs = jsonString.split(",");
-        
-        for (String pair : pairs) {
-            String[] keyValue = pair.split(":");
-            if (keyValue.length == 2) {
-                String key = keyValue[0].trim();
-                String value = keyValue[1].trim();
-                result.put(key, value);
-            }
-        }
-        
-        return result;
-    }
-//    public String getResult(String wrongSentence, String userTranslation) {
-//        String prompt = wrongSentence + " 를 번역한 결과가 " + userTranslation +
-//                "이 맞는지 판단해줘(정답, 오답) *은 출력하지마, 이유를 알려줘(**은 출력하지마)";
-//        logger.info("Retry evaluation prompt: {}", prompt);
-//        return getContents(prompt);
-//    }
 }
